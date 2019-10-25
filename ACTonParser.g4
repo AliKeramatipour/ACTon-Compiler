@@ -36,13 +36,40 @@ actorInstantiation:
     ;
 
 actorDeclaration:
-    ACTOR LCURLY
+	ACTOR (EXTENDS IDENTIFIER)?
+    LPAR INTEGER_LITERAL RPAR
+    LCURLY
         actorBlock
 	RCURLY
     ;
 
 actorBlock:
+    KNOWNACTORS LCURLY
+        (IDENTIFIER IDENTIFIER SEMI)*
+    RCURLY
+	ACTORVARS LCURLY
+        (type IDENTIFIER SEMI)*
+    RCURLY
+	initializerDeclaration?
+    msgHandlerDeclaration*
+    ;
 
+initializerDeclaration:
+    MSGHANDLER INITIAL
+	arguments
+	msgHandlerBlock
+    ;
+
+msgHandlerDeclaration:
+    MSGHANDLER IDENTIFIER
+	arguments
+    msgHandlerBlock
+    ;
+
+msgHandlerBlock:
+	LCURLY
+
+    RCURLY
     ;
 
 knownActorsList:
@@ -58,9 +85,9 @@ callArguments:
 
 arguments:
 	LPAR (
-        (arg = type IDENTIFIER)
+        (type IDENTIFIER)
 		(
-            COMMA arg = type IDENTIFIER
+            COMMA type IDENTIFIER
 		)*
 	)? RPAR;
 
