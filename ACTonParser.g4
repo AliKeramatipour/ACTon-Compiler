@@ -83,7 +83,7 @@ varDeclaration:
     ;
 
 commandLine:
-    forBlock | ifBlock | ifElseBlock | commandLineSemi
+    forBlock | ifBlock | commandLineSemi
     ;
 
 commandLineSemi:
@@ -102,13 +102,8 @@ forBlock:
 ifBlock:
     IF LPAR arithmeticStatement RPAR
         newBlock
-    ;
-
-ifElseBlock:
-    IF LPAR arithmeticStatement RPAR
-        newBlock
-    ELSE
-        newBlock
+    (ELSE
+            newBlock)?
     ;
 
 newBlock:
@@ -140,7 +135,7 @@ argument:
     ;
 
 methodCall  :
-	(((SELF | SENDER | IDENTIFIER) DOT)? (PRINT | IDENTIFIER))
+	(( (SELF | SENDER | IDENTIFIER) DOT IDENTIFIER) | PRINT)
         LPAR
             callArguments?
         RPAR
@@ -193,7 +188,7 @@ multLessArithmeticStatement:
     //level 1 parentheses
     | (LPAR arithmeticStatement RPAR)
     //level 0 single identifire or number
-    | (INTEGER_LITERAL | SENDER | SELF | IDENTIFIER)
+    | (INTEGER_LITERAL | SENDER | SELF | IDENTIFIER | BOOL_LITERAL)
     ;
 
 arguments:
