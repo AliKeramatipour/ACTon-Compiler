@@ -36,7 +36,7 @@ actorInstantiation:
     ;
 
 actorDeclaration:
-	ACTOR (IDENTIFIER EXTENDS IDENTIFIER)?
+	ACTOR IDENTIFIER (EXTENDS IDENTIFIER)?
     LPAR INTEGER_LITERAL RPAR
     LCURLY
         actorBlock
@@ -55,7 +55,7 @@ actorBlock:
     ;
 
 initializerDeclaration:
-    MSGHANDLER
+    MSGHANDLER INITIAL
 	arguments
 	msgHandlerBlock
     ;
@@ -116,7 +116,7 @@ newBlock:
     ;
 
 methodCall:
-    (SELF | SENDER | IDENTIFIER) DOT IDENTIFIER
+	(((SELF | SENDER | IDENTIFIER) DOT)? PRINT | IDENTIFIER )
         LPAR
             callArguments?
         RPAR
@@ -129,7 +129,7 @@ curlyBlock:
     ;
 
 varAssigment:
-    IDENTIFIER ASSIGN (arithmeticStatement | STRING_LITERAL | BOOL_LITERAL)
+	IDENTIFIER ASSIGN ( BOOL_LITERAL | STRING_LITERAL| arithmeticStatement )
     ;
 
 knownActorsList:
