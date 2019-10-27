@@ -128,5 +128,6 @@ hs_err_pid*
 .history
 
 .DS_Store
+*.out
 
 # End of https://www.gitignore.io/api/java,intellij,visualstudiocode
