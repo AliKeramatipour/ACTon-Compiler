@@ -29,7 +29,7 @@ mainDeclaration:
 // First IDENTIFIER is Actor name
 actorInstantiation:
     ActorType = IDENTIFIER ActorName = IDENTIFIER
-    { printLine("ActorInstantiation‬‬:" + $ActorType.text + "," + $ActorName.text); }
+    { print("ActorInstantiation‬‬:" + $ActorType.text + "," + $ActorName.text); }
 	LPAR knownActorsList? RPAR
     { printEmptyLine(); }
     COLON
