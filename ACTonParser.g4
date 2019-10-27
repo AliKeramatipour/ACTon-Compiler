@@ -36,7 +36,7 @@ actorInstantiation:
     ;
 
 actorDeclaration:
-	ACTOR (EXTENDS IDENTIFIER)?
+	ACTOR (IDENTIFIER EXTENDS IDENTIFIER)?
     LPAR INTEGER_LITERAL RPAR
     LCURLY
         actorBlock
@@ -55,7 +55,7 @@ actorBlock:
     ;
 
 initializerDeclaration:
-    MSGHANDLER INITIAL
+    MSGHANDLER
 	arguments
 	msgHandlerBlock
     ;
@@ -68,34 +68,79 @@ msgHandlerDeclaration:
 
 msgHandlerBlock:
 	LCURLY
-
+        commandLine*
     RCURLY
+    ;
+
+commandLine:
+    varDeclaration | varAssigment | forBlock | ifElseBlock | singleLineIfElseBlock | BREAK
+    ;
+
+varDeclaration:
+    (primitiveType) IDENTIFIER
+    | INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK 
+    ;
+
+forBlock:
+    FOR LPAR (varAssigment?) SEMI ( arithmeticStatement? ) SEMI (varAssigment?) RPAR
+    ;
+
+varAssigment:
+    IDENTIFIER ASSIGN arithmeticStatement
     ;
 
 knownActorsList:
 	IDENTIFIER (COMMA knownActorsList)?
     ;
 
-arithmeticBlock:
+callArguments:
+    arithmeticStatement (COMMA arithmeticStatement)?
+	;
+
+arithmeticStatement: // without semi-colon at the end
+    //level 11 ??? aya 3 ta mosavi kenare ham mishe biad ? "a=b=c"
+    //level 10 inlineIf
+    | inLineIf
+    //level 9 OR
+    | arithmeticStatement OR arithmeticStatement
+    //level 8 AND
+    | arithmeticStatement AND arithmeticStatement
+    //level 7 comparative equality
+    | arithmeticStatement (EQ | NE) arithmeticStatement
+    //level 6 comparative
+    | arithmeticStatement (LT | GT) arithmeticStatement 
+    //level 5 ADD or SUB
+    | arithmeticStatement (ADD | SUB) arithmeticStatement
+    //level 4 MUL or DIV or MOD
+    | arithmeticStatement (MUL | DIV | MOD) arithmeticStatement
+    //level 3 single operand pre
+    | (INC | DEC | NOT) IDENTIFIER
+    //level 2 using array blocks
+    | IDENTIFIER LBRACK arithmeticStatement RBRACK
+    | IDENTIFIER (INC | DEC | NOT)
+    //level 1 parentheses
+    | LPAR arithmeticStatement RPAR
+    //level 0 single identifire or number
+    | Digitis | IDENTIFIER
     ;
 
-callArguments:
-    arithmeticBlock (COMMA callArguments)?
-	;
+inLineIf:
+    arithmeticStatement QMARK arithmeticStatement COLON arithmeticStatement
+    ;
 
 arguments:
 	LPAR (
         (type IDENTIFIER)
-		(
-            COMMA type IDENTIFIER
-		)*
+		(COMMA type IDENTIFIER)*
 	)? RPAR;
 
-type: primitiveType;
+type: primitiveType | nonPrimitiveType;
+
+nonPrimitiveType: INTARRAY;
 
 primitiveType: INT | STRING | BOOLEAN;
 
-
+equationOperator: ADD | SUB | MUL | DIV | MOD;
 
 // Keywords
 MAIN: 'main';
@@ -107,6 +152,7 @@ ELSE: 'else';
 INT: 'int';
 STRING: 'string';
 BOOLEAN: 'boolean';
+INTARRAY: 'int[]';
 
 TRUE: 'true';
 FALSE: 'false';
