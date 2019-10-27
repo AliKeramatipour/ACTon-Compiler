@@ -115,13 +115,6 @@ newBlock:
     (curlyBlock | commandLine)
     ;
 
-methodCall:
-	(((SELF | SENDER | IDENTIFIER) DOT)? (PRINT | IDENTIFIER) )
-        LPAR
-            callArguments?
-        RPAR
-    ;
-
 curlyBlock:
     LCURLY
         commandLine*
@@ -129,7 +122,7 @@ curlyBlock:
     ;
 
 varAssigment:
-	IDENTIFIER ASSIGN ( BOOL_LITERAL | STRING_LITERAL | arithmeticStatement )
+	IDENTIFIER ASSIGN ( argument )
     ;
 
 boolLiteral: (TRUE | FALSE);
@@ -139,8 +132,21 @@ knownActorsList:
     ;
 
 callArguments:
-    arithmeticStatement (COMMA arithmeticStatement)?
-	;
+    argument (COMMA argument)?
+    ;
+
+argument:
+	BOOL_LITERAL
+	| STRING_LITERAL
+	| arithmeticStatement
+    ;
+
+methodCall  :
+	(((SELF | SENDER | IDENTIFIER) DOT)? (PRINT | IDENTIFIER))
+        LPAR
+            callArguments?
+        RPAR
+    ;
 
 arithmeticStatement: // without semi-colon at the end
     //level 11 few assigments
