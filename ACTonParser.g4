@@ -48,7 +48,7 @@ actorBlock:
         (IDENTIFIER IDENTIFIER SEMI)*
     RCURLY
 	ACTORVARS LCURLY
-        (type IDENTIFIER SEMI)*
+	    varDeclarationWithSemi*
     RCURLY
 	initializerDeclaration?
     msgHandlerDeclaration*
@@ -56,30 +56,33 @@ actorBlock:
 
 initializerDeclaration:
     MSGHANDLER INITIAL
-	arguments
-	msgHandlerBlock
+    msgHandlerBlock
     ;
 
 msgHandlerDeclaration:
     MSGHANDLER IDENTIFIER
-	arguments
     msgHandlerBlock
     ;
 
 msgHandlerBlock:
+	LPAR arguments? RPAR
 	curlyBlockWithDeclaration
     ;
 
 curlyBlockWithDeclaration:
     LCURLY
-        varDeclaration*
+	    varDeclarationWithSemi*
         commandLine*
     RCURLY
     ;
 
+varDeclarationWithSemi:
+	varDeclaration SEMI
+    ;
+
 varDeclaration:
-    ((primitiveType) IDENTIFIER
-    | INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK) SEMI
+    (primitiveType IDENTIFIER)
+    | (INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK)
     ;
 
 commandLine:
@@ -95,7 +98,7 @@ commandLineSemi:
     ;
 
 forBlock:
-    FOR LPAR (varAssigment?) SEMI (arithmeticStatement?) SEMI (varAssigment?) RPAR
+    FOR LPAR varAssigment? SEMI arithmeticStatement? SEMI varAssigment? RPAR
         newBlock
     ;
 
@@ -112,7 +115,8 @@ ifElseBlock:
     ;
 
 newBlock:
-    (curlyBlock | commandLine)
+    curlyBlock
+    | commandLine
     ;
 
 curlyBlock:
@@ -122,7 +126,7 @@ curlyBlock:
     ;
 
 varAssigment:
-	IDENTIFIER ASSIGN argument
+	IDENTIFIER ASSIGN arithmeticStatement
     ;
 
 knownActorsList:
@@ -130,11 +134,7 @@ knownActorsList:
     ;
 
 callArguments:
-    argument (COMMA callArguments)?
-    ;
-
-argument:
-    arithmeticStatement
+    arithmeticStatement (COMMA callArguments)?
     ;
 
 methodCall  :
@@ -191,7 +191,7 @@ multLessArithmeticStatement:
     //level 1 parentheses
     | (LPAR arithmeticStatement RPAR)
     //level 0 single identifire or number
-	| (BOOL_LITERAL | INTEGER_LITERAL | STRING_LITERAL | idSelfSender |  (SELF DOT IDENTIFIER) )
+	| (BOOL_LITERAL | INTEGER_LITERAL | STRING_LITERAL | idSelfSender | (SELF DOT IDENTIFIER) )
     ;
 
 idSelfSender:
@@ -199,14 +199,9 @@ idSelfSender:
     ;
 
 arguments:
-	LPAR (
-        (type IDENTIFIER)
-		(COMMA type IDENTIFIER)*
-	)? RPAR;
-
-type: primitiveType | nonPrimitiveType;
-
-nonPrimitiveType: INTARRAY;
+    varDeclaration
+    (COMMA arguments)?
+	;
 
 primitiveType: INT | STRING | BOOLEAN;
 
