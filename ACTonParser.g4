@@ -47,7 +47,10 @@ actorDeclaration:
 
 actorBlock:
     KNOWNACTORS LCURLY
-        (IDENTIFIER IDENTIFIER SEMI)*
+	(
+		ActorType = IDENTIFIER ActorName = IDENTIFIER SEMI
+        { printLine("KnownActor:" + $ActorType.text + ":" + $ActorName.text); }
+    )*
     RCURLY
 	ACTORVARS LCURLY
 	    varDeclarationWithSemi*
