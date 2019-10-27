@@ -86,8 +86,9 @@ varDeclarationWithSemi:
     ;
 
 varDeclaration:
-    (primitiveType IDENTIFIER)
-    | (INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK)
+    { print("VarDec:"); }
+    (primitiveType IDENTIFIER { printLine($primitiveType.text + "," + $IDENTIFIER.text); } )
+    | (INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK { printLine("int[]," + $IDENTIFIER.text); })
     ;
 
 commandLine:
