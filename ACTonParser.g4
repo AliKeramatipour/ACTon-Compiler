@@ -36,7 +36,9 @@ actorInstantiation:
     ;
 
 actorDeclaration:
-	ACTOR IDENTIFIER (EXTENDS IDENTIFIER)?
+	ACTOR IDENTIFIER { print("ActorDec:" + $IDENTIFIER.text); }
+    (EXTENDS IDENTIFIER { print("," + $IDENTIFIER.text); } )?
+    { printEmptyLine(); }
     LPAR INTEGER_LITERAL RPAR
     LCURLY
         actorBlock
