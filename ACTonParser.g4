@@ -28,8 +28,10 @@ mainDeclaration:
 
 // First IDENTIFIER is Actor name
 actorInstantiation:
-    IDENTIFIER IDENTIFIER
+    ActorType = IDENTIFIER ActorName = IDENTIFIER
+    { printLine("ActorInstantiation‬‬:" + $ActorType.text + "," + $ActorName.text); }
 	LPAR knownActorsList? RPAR
+    { printEmptyLine(); }
     COLON
     LPAR callArguments? RPAR
     SEMI
@@ -49,7 +51,7 @@ actorBlock:
     KNOWNACTORS LCURLY
 	(
 		ActorType = IDENTIFIER ActorName = IDENTIFIER SEMI
-        { printLine("KnownActor:" + $ActorType.text + ":" + $ActorName.text); }
+        { printLine("KnownActor:" + $ActorType.text + "," + $ActorName.text); }
     )*
     RCURLY
 	ACTORVARS LCURLY
@@ -104,22 +106,22 @@ commandLineSemi:
     ;
 
 forBlock:
-	FOR { printLine("Loop:for) }
+	FOR { printLine("Loop:for"); }
     LPAR varAssigment? SEMI arithmeticStatement? SEMI varAssigment? RPAR
         newBlock
     ;
 
 ifBlock:
-    IF { printLine("Conditional:if) }
+    IF { printLine("Conditional:if"); }
     LPAR arithmeticStatement RPAR
         newBlock
     ;
 
 ifElseBlock:
-    IF { printLine("Conditional:if) }
+    IF { printLine("Conditional:if"); }
     LPAR arithmeticStatement RPAR
         newBlock
-    ELSE { printLine("Conditional:else) }
+    ELSE { printLine("Conditional:else"); }
         newBlock
     ;
 
@@ -139,15 +141,21 @@ varAssigment:
     ;
 
 knownActorsList:
-	IDENTIFIER (COMMA knownActorsList)?
+	IDENTIFIER { print("," + $IDENTIFIER.text); } (COMMA knownActorsList)?
     ;
 
 callArguments:
     arithmeticStatement (COMMA callArguments)?
     ;
 
-methodCall  :
-	(( idSelfSender DOT IDENTIFIER) | PRINT)
+methodCall:
+	(
+		(
+			idSelfSender DOT IDENTIFIER
+            { printLine("‫‪MsgHandlerCall‬‬:" + $idSelfSender.text + "," + $IDENTIFIER.text); }
+        )
+		| ( PRINT { printLine("‫‪Built-in:Print‬‬"); } )
+    )
         LPAR
             callArguments?
         RPAR
