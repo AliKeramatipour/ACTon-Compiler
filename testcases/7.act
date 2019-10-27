@@ -1,0 +1,17 @@
+actor A(5) {
+   knownactors {
+       A a;
+   }
+   actorvars {
+       int i;
+       boolean odd;
+    }
+
+   msghandler initial(int i2){
+       a = a + 2;
+       a = b = c;
+   }
+}
+
+main {
+}
