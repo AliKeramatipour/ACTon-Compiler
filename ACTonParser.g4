@@ -29,7 +29,7 @@ mainDeclaration:
 // First IDENTIFIER is Actor name
 actorInstantiation:
     ActorType = IDENTIFIER ActorName = IDENTIFIER
-    { print("ActorInstantiation‬‬:" + $ActorType.text + "," + $ActorName.text); }
+    { print("ActorInstantiation:" + $ActorType.text + "," + $ActorName.text); }
 	LPAR knownActorsList? RPAR
     { printEmptyLine(); }
     COLON
@@ -62,12 +62,12 @@ actorBlock:
     ;
 
 initializerDeclaration:
-	MSGHANDLER INITIAL { printLine("‫‪MsgHandlerDec‬‬:initial"); }
+	MSGHANDLER INITIAL { printLine("MsgHandlerDec:initial"); }
     msgHandlerBlock
     ;
 
 msgHandlerDeclaration:
-	MSGHANDLER IDENTIFIER { printLine("‫‪MsgHandlerDec‬‬:" + $IDENTIFIER.text); }
+	MSGHANDLER IDENTIFIER { printLine("MsgHandlerDec:" + $IDENTIFIER.text); }
     msgHandlerBlock
     ;
 
@@ -152,9 +152,9 @@ methodCall:
 	(
 		(
 			idSelfSender DOT IDENTIFIER
-            { printLine("‫‪MsgHandlerCall‬‬:" + $idSelfSender.text + "," + $IDENTIFIER.text); }
+            { printLine("MsgHandlerCall:" + $idSelfSender.text + "," + $IDENTIFIER.text); }
         )
-		| ( PRINT { printLine("‫‪Built-in:Print‬‬"); } )
+		| ( PRINT { printLine("Built-in:Print"); } )
     )
         LPAR
             callArguments?
