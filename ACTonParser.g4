@@ -57,12 +57,12 @@ actorBlock:
     ;
 
 initializerDeclaration:
-    MSGHANDLER INITIAL
+	MSGHANDLER INITIAL { printLine("‫‪MsgHandlerDec‬‬:initial"); }
     msgHandlerBlock
     ;
 
 msgHandlerDeclaration:
-    MSGHANDLER IDENTIFIER
+	MSGHANDLER IDENTIFIER { printLine("‫‪MsgHandlerDec‬‬:" + $IDENTIFIER.text); }
     msgHandlerBlock
     ;
 
