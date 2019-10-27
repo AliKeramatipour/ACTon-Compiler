@@ -149,32 +149,32 @@ arithmeticStatement: // without semi-colon at the end
 
 qMarkLessArithmeticStatement:
     //level 9 OR
-    orLessArithmeticStatement (OR arithmeticStatement)?
+    orLessArithmeticStatement (OR qMarkLessArithmeticStatement)?
     ;
 
 orLessArithmeticStatement:
     //level 8 AND
-    andLessArithmeticStatement (AND arithmeticStatement)?
+    andLessArithmeticStatement (AND orLessArithmeticStatement)?
     ;
 
 andLessArithmeticStatement:
     //level 7 comparative equality
-	eqLessArithmeticStatement (equalityOperator arithmeticStatement)?
+	eqLessArithmeticStatement (equalityOperator andLessArithmeticStatement)?
     ;
 
 eqLessArithmeticStatement:
     //level 6 comparative
-	compLessArithmeticStatement (comparisonOperator arithmeticStatement)?
+	compLessArithmeticStatement (comparisonOperator eqLessArithmeticStatement)?
     ;
 
 compLessArithmeticStatement:
     //level 5 ADD or SUB
-	addLessArithmeticStatement (additiveOperator arithmeticStatement)?
+	addLessArithmeticStatement (additiveOperator compLessArithmeticStatement)?
     ;
 
 addLessArithmeticStatement:
     //level 4 MUL or DIV or MOD
-	multLessArithmeticStatement (multiplicativeOperator arithmeticStatement)?
+	multLessArithmeticStatement (multiplicativeOperator addLessArithmeticStatement)?
     ;
 
 multLessArithmeticStatement:
