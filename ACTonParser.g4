@@ -78,8 +78,8 @@ curlyBlockWithDeclaration:
     ;
 
 varDeclaration:
-    (primitiveType) IDENTIFIER
-    | INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK
+    ((primitiveType) IDENTIFIER
+    | INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK) SEMI
     ;
 
 commandLine:
