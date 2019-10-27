@@ -132,6 +132,8 @@ varAssigment:
 	IDENTIFIER ASSIGN ( BOOL_LITERAL | STRING_LITERAL | arithmeticStatement )
     ;
 
+boolLiteral: (TRUE | FALSE);
+
 knownActorsList:
 	IDENTIFIER (COMMA knownActorsList)?
     ;
@@ -233,7 +235,7 @@ STRING: 'string';
 BOOLEAN: 'boolean';
 INTARRAY: 'int[]';
 
-TRUE: 'true';
+TRUE : 'true';
 FALSE: 'false';
 
 FOR: 'for';
