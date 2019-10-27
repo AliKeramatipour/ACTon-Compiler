@@ -134,8 +134,7 @@ callArguments:
     ;
 
 argument:
-    STRING_LITERAL
-	| arithmeticStatement
+    arithmeticStatement
     ;
 
 methodCall  :
