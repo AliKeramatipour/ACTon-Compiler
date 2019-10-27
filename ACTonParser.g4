@@ -132,8 +132,6 @@ varAssigment:
 	IDENTIFIER ASSIGN (boolLiteral | STRING_LITERAL| arithmeticStatement)
     ;
 
-boolLiteral: (TRUE | FALSE);
-
 knownActorsList:
 	IDENTIFIER (COMMA knownActorsList)?
     ;
@@ -146,7 +144,7 @@ arithmeticStatement: // without semi-colon at the end
     //level 11 few assigments
     varAssigment
     //level 10 inlineIf
-    | qMarkLessArithmeticStatement QMARK arithmeticStatement COLON arithmeticStatement
+    | qMarkLessArithmeticStatement (QMARK arithmeticStatement COLON arithmeticStatement)?
     ;
 
 qMarkLessArithmeticStatement:
@@ -181,15 +179,15 @@ addLessArithmeticStatement:
 
 multLessArithmeticStatement:
     //level 3 single operand pre
-	prefixUnaryOperator IDENTIFIER
+	(prefixUnaryOperator IDENTIFIER)
     //level 2 using array blocks
-    | IDENTIFIER LBRACK arithmeticStatement RBRACK
+    | (IDENTIFIER LBRACK arithmeticStatement RBRACK)
 	//level 2 single operand post
-    | IDENTIFIER postfixUnaryOperator
+    | (IDENTIFIER postfixUnaryOperator)
     //level 1 parentheses
-    | LPAR arithmeticStatement RPAR
+    | (LPAR arithmeticStatement RPAR)
     //level 0 single identifire or number
-    | INTEGER_LITERAL | IDENTIFIER
+    | (INTEGER_LITERAL | SENDER | SELF | IDENTIFIER)
     ;
 
 arguments:
@@ -215,6 +213,8 @@ multiplicativeOperator: MUL | DIV | AND;
 postfixUnaryOperator: INC | DEC;
 
 prefixUnaryOperator: INC | DEC | NOT;
+
+boolLiteral: (TRUE | FALSE);
 
 // Keywords
 MAIN: 'main';
