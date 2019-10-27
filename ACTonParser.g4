@@ -143,23 +143,44 @@ callArguments:
 arithmeticStatement: // without semi-colon at the end
     //level 11 few assigments
     varAssigment
-    //level 11 inlineIf
-    | inLineIf
-    //level 10 OR
-    | arithmeticStatement OR arithmeticStatement
-    //level 9 AND
-    | arithmeticStatement AND arithmeticStatement
-    //level 8 comparative equality
-	| arithmeticStatement equalityOperator arithmeticStatement
-    //level 7 comparative
-	| arithmeticStatement comparisonOperator arithmeticStatement
-    //level 6 ADD or SUB
-	| arithmeticStatement additiveOperator arithmeticStatement
-    //level 5 MUL or DIV or MOD
-	| arithmeticStatement multiplicativeOperator arithmeticStatement
-    //level 4 single operand pre
-	| prefixUnaryOperator IDENTIFIER
-    //level 3 using array blocks
+    //level 10 inlineIf
+    | qMarkLessArithmeticStatement QMARK arithmeticStatement COLON arithmeticStatement
+    ;
+
+qMarkLessArithmeticStatement:
+    //level 9 OR
+    orLessArithmeticStatement (OR arithmeticStatement)?
+    ;
+
+orLessArithmeticStatement:
+    //level 8 AND
+    andLessArithmeticStatement (AND arithmeticStatement)?
+    ;
+
+andLessArithmeticStatement:
+    //level 7 comparative equality
+	eqLessArithmeticStatement (equalityOperator arithmeticStatement)?
+    ;
+
+eqLessArithmeticStatement:
+    //level 6 comparative
+	compLessArithmeticStatement (comparisonOperator arithmeticStatement)?
+    ;
+
+compLessArithmeticStatement:
+    //level 5 ADD or SUB
+	addLessArithmeticStatement (additiveOperator arithmeticStatement)?
+    ;
+
+addLessArithmeticStatement:
+    //level 4 MUL or DIV or MOD
+	multLessArithmeticStatement (multiplicativeOperator arithmeticStatement)?
+    ;
+
+multLessArithmeticStatement:
+    //level 3 single operand pre
+	prefixUnaryOperator IDENTIFIER
+    //level 2 using array blocks
     | IDENTIFIER LBRACK arithmeticStatement RBRACK
 	//level 2 single operand post
     | IDENTIFIER postfixUnaryOperator
@@ -167,10 +188,6 @@ arithmeticStatement: // without semi-colon at the end
     | LPAR arithmeticStatement RPAR
     //level 0 single identifire or number
     | INTEGER_LITERAL | IDENTIFIER
-    ;
-
-inLineIf:
-    arithmeticStatement QMARK arithmeticStatement COLON arithmeticStatement
     ;
 
 arguments:
