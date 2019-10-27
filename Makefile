@@ -11,6 +11,7 @@ build: clean ACTonParser.g4
 	java org.antlr.v4.gui.TestRig ACTonParser actonParser ${FLAGS} < testcases/3.act
 	java org.antlr.v4.gui.TestRig ACTonParser actonParser ${FLAGS} < testcases/4.act
 	java org.antlr.v4.gui.TestRig ACTonParser actonParser ${FLAGS} < testcases/5.act
+	java org.antlr.v4.gui.TestRig ACTonParser actonParser ${FLAGS} < testcases/6.act
 	make clean
 
 clean:
