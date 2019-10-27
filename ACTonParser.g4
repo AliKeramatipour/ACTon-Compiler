@@ -79,7 +79,7 @@ curlyBlockWithDeclaration:
 
 varDeclaration:
     (primitiveType) IDENTIFIER
-    | INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK 
+    | INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK
     ;
 
 commandLine:
@@ -91,7 +91,7 @@ commandLineSemi:
     | BREAK
     | methodCall
     | varAssigment)
-    SEMI 
+    SEMI
     ;
 
 forBlock:
@@ -107,7 +107,7 @@ ifBlock:
 ifElseBlock:
     IF LPAR arithmeticStatement RPAR
         newBlock
-    ELSE 
+    ELSE
         newBlock
     ;
 
@@ -116,14 +116,14 @@ newBlock:
     ;
 
 methodCall:
-    (SELF | SENDER | IDENTIFIER) DOT IDENTIFIER 
+    (SELF | SENDER | IDENTIFIER) DOT IDENTIFIER
         LPAR
             callArguments?
         RPAR
     ;
 
 curlyBlock:
-    LCURLY 
+    LCURLY
         commandLine*
     RCURLY
     ;
@@ -143,25 +143,26 @@ callArguments:
 arithmeticStatement: // without semi-colon at the end
     //level 11 few assigments
     varAssigment
-    //level 10 inlineIf
+    //level 11 inlineIf
     | inLineIf
-    //level 9 OR
+    //level 10 OR
     | arithmeticStatement OR arithmeticStatement
-    //level 8 AND
+    //level 9 AND
     | arithmeticStatement AND arithmeticStatement
-    //level 7 comparative equality
-    | arithmeticStatement (EQ | NE) arithmeticStatement
-    //level 6 comparative
-    | arithmeticStatement (LT | GT) arithmeticStatement 
-    //level 5 ADD or SUB
-    | arithmeticStatement (ADD | SUB) arithmeticStatement
-    //level 4 MUL or DIV or MOD
-    | arithmeticStatement (MUL | DIV | MOD) arithmeticStatement
-    //level 3 single operand pre
-    | (INC | DEC | NOT) IDENTIFIER
-    //level 2 using array blocks
+    //level 8 comparative equality
+	| arithmeticStatement equalityOperator arithmeticStatement
+    //level 7 comparative
+	| arithmeticStatement comparisonOperator arithmeticStatement
+    //level 6 ADD or SUB
+	| arithmeticStatement additiveOperator arithmeticStatement
+    //level 5 MUL or DIV or MOD
+	| arithmeticStatement multiplicativeOperator arithmeticStatement
+    //level 4 single operand pre
+	| prefixUnaryOperator IDENTIFIER
+    //level 3 using array blocks
     | IDENTIFIER LBRACK arithmeticStatement RBRACK
-    | IDENTIFIER (INC | DEC | NOT)
+	//level 2 single operand post
+    | IDENTIFIER postfixUnaryOperator
     //level 1 parentheses
     | LPAR arithmeticStatement RPAR
     //level 0 single identifire or number
@@ -184,7 +185,17 @@ nonPrimitiveType: INTARRAY;
 
 primitiveType: INT | STRING | BOOLEAN;
 
-equationOperator: ADD | SUB | MUL | DIV | MOD;
+equalityOperator: EQ | NE;
+
+comparisonOperator: GT | LT;
+
+additiveOperator: ADD | SUB;
+
+multiplicativeOperator: MUL | DIV | AND;
+
+postfixUnaryOperator: INC | DEC;
+
+prefixUnaryOperator: INC | DEC | NOT;
 
 // Keywords
 MAIN: 'main';
