@@ -60,31 +60,27 @@ actor Bridge(5) {
 
 actor Train(3) {
     knownactors {
-   	 Bridge control;
+   	    Bridge control;
     }
-
     actorvars {
-   	 boolean onBridge;
+   	    boolean onBridge;
     }
-
     msghandler initial() {
-   	 onBridge = false;
-   	 self.Passed();
+   	    onBridge = false;
+   	    self.Passed();
     }
-
     msghandler YouMayPass() {
-   	 onBridge = true;
-   	 print("YOu May Pass!");
-   	 self.ReachBridge();
+        onBridge = true;
+        print("YOu May Pass!");
+        self.ReachBridge();
     }
-
     msghandler Passed(){
-   	 onBridge = false;
-   	 control.Leave();
-   	 self.ReachBridge();
+        onBridge = false;
+        control.Leave();
+        self.ReachBridge();
     }
     msghandler ReachBridge() {
-   	 control.Arrive();
+        control.Arrive();
     }
 }
 
