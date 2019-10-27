@@ -1,17 +1,42 @@
 grammar ACTonParser;
 
 @members {
-   void print(Object obj){
+	String operators = "";
+
+    void print(String obj){
         System.out.print(obj);
-   }
+    }
 
-   void printEmptyLine(){
+    void printEmptyLine(){
         System.out.println("");
-   }
+    }
 
-   void printLine(Object obj){
+    void printLine(String obj){
         System.out.println(obj);
-   }
+    }
+
+    void printOperator(String obj) {
+        System.out.println("Operator:" + obj);
+    }
+
+    void pushOperator(String obj) {
+        if (operators.length() > 0) {
+		    operators = obj + " " + operators;
+        } else {
+            operators = obj;
+        }
+    }
+
+    void printStack() {
+	    if(operators.length() == 0) {
+            return;
+        }
+	    String[] ops = operators.split(" ", 0);
+        for (String op : ops) {
+            printOperator(op);
+        }
+        operators = "";
+    }
 }
 
 actonParser:
@@ -137,7 +162,7 @@ curlyBlock:
     ;
 
 varAssigment:
-	IDENTIFIER ASSIGN arithmeticStatement
+	IDENTIFIER ASSIGN { printOperator($ASSIGN.text); } arithmeticStatement
     ;
 
 knownActorsList:
@@ -165,46 +190,51 @@ arithmeticStatement: // without semi-colon at the end
     //level 11 few assigments
     varAssigment
     //level 10 inlineIf
-    | qMarkLessArithmeticStatement (QMARK arithmeticStatement COLON arithmeticStatement)?
+	| ( qMarkLessArithmeticStatement
+	(
+			QMARK { pushOperator($QMARK.text); pushOperator(":"); } arithmeticStatement
+                COLON  arithmeticStatement
+	)? )
+    { printStack(); }
     ;
 
 qMarkLessArithmeticStatement:
     //level 9 OR
-    orLessArithmeticStatement (OR qMarkLessArithmeticStatement)?
+	orLessArithmeticStatement (OR { pushOperator($OR.text); } qMarkLessArithmeticStatement)?
     ;
 
 orLessArithmeticStatement:
     //level 8 AND
-    andLessArithmeticStatement (AND orLessArithmeticStatement)?
+    andLessArithmeticStatement (AND { pushOperator($AND.text); } orLessArithmeticStatement)?
     ;
 
 andLessArithmeticStatement:
     //level 7 comparative equality
-	eqLessArithmeticStatement (equalityOperator andLessArithmeticStatement)?
+	eqLessArithmeticStatement (equalityOperator { pushOperator($equalityOperator.text); } andLessArithmeticStatement)?
     ;
 
 eqLessArithmeticStatement:
     //level 6 comparative
-	compLessArithmeticStatement (comparisonOperator eqLessArithmeticStatement)?
+	compLessArithmeticStatement (comparisonOperator { pushOperator($comparisonOperator.text); } eqLessArithmeticStatement)?
     ;
 
 compLessArithmeticStatement:
     //level 5 ADD or SUB
-	addLessArithmeticStatement (additiveOperator compLessArithmeticStatement)?
+	addLessArithmeticStatement (additiveOperator { pushOperator($additiveOperator.text); } compLessArithmeticStatement)?
     ;
 
 addLessArithmeticStatement:
     //level 4 MUL or DIV or MOD
-	multLessArithmeticStatement (multiplicativeOperator addLessArithmeticStatement)?
+	multLessArithmeticStatement (multiplicativeOperator { pushOperator($multiplicativeOperator.text); } addLessArithmeticStatement)?
     ;
 
 multLessArithmeticStatement:
     //level 3 single operand pre
-	(prefixUnaryOperator multLessArithmeticStatement )
+	(prefixUnaryOperator  { pushOperator($prefixUnaryOperator.text); } multLessArithmeticStatement )
     //level 2 using array blocks
     | (IDENTIFIER LBRACK arithmeticStatement RBRACK)
 	//level 2 single operand post
-    | (IDENTIFIER postfixUnaryOperator)
+    | (IDENTIFIER postfixUnaryOperator { pushOperator($postfixUnaryOperator.text); })
     //level 1 parentheses
     | (LPAR arithmeticStatement RPAR)
     //level 0 single identifire or number
