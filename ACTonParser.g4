@@ -83,7 +83,7 @@ varDeclaration:
     ;
 
 commandLine:
-    forBlock | ifBlock | commandLineSemi
+    forBlock | ifBlock | ifElseBlock | commandLineSemi
     ;
 
 commandLineSemi:
@@ -102,8 +102,13 @@ forBlock:
 ifBlock:
     IF LPAR arithmeticStatement RPAR
         newBlock
-    (ELSE
-            newBlock)?
+    ;
+
+ifElseBlock:
+    IF LPAR arithmeticStatement RPAR
+        newBlock
+    ELSE
+            newBlock
     ;
 
 newBlock:
