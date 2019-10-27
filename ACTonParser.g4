@@ -29,9 +29,9 @@ mainDeclaration:
 // First IDENTIFIER is Actor name
 actorInstantiation:
     IDENTIFIER IDENTIFIER
-	LPAR knownActorsList RPAR
+	LPAR knownActorsList? RPAR
     COLON
-    LPAR callArguments RPAR
+    LPAR callArguments? RPAR
     SEMI
     ;
 
@@ -115,13 +115,6 @@ newBlock:
     (curlyBlock | commandLine)
     ;
 
-methodCall:
-	(((SELF | SENDER | IDENTIFIER) DOT)? PRINT | IDENTIFIER )
-        LPAR
-            callArguments?
-        RPAR
-    ;
-
 curlyBlock:
     LCURLY
         commandLine*
@@ -129,7 +122,7 @@ curlyBlock:
     ;
 
 varAssigment:
-	IDENTIFIER ASSIGN (boolLiteral | STRING_LITERAL| arithmeticStatement)
+	IDENTIFIER ASSIGN ( argument )
     ;
 
 knownActorsList:
@@ -137,8 +130,21 @@ knownActorsList:
     ;
 
 callArguments:
-    arithmeticStatement (COMMA arithmeticStatement)?
-	;
+    argument (COMMA argument)?
+    ;
+
+argument:
+	BOOL_LITERAL
+	| STRING_LITERAL
+	| arithmeticStatement
+    ;
+
+methodCall  :
+	(((SELF | SENDER | IDENTIFIER) DOT)? (PRINT | IDENTIFIER))
+        LPAR
+            callArguments?
+        RPAR
+    ;
 
 arithmeticStatement: // without semi-colon at the end
     //level 11 few assigments
@@ -214,7 +220,12 @@ postfixUnaryOperator: INC | DEC;
 
 prefixUnaryOperator: INC | DEC | NOT;
 
-boolLiteral: (TRUE | FALSE);
+// Literals
+INTEGER_LITERAL: Digits;
+
+BOOL_LITERAL: TRUE | FALSE;
+
+STRING_LITERAL: '"' (~["\r\n])* '"';
 
 // Keywords
 MAIN: 'main';
@@ -286,12 +297,6 @@ RCURLY: '}';
 
 COMMA: ',';
 DOT: '.';
-
-// Literals
-
-INTEGER_LITERAL: Digits;
-
-STRING_LITERAL: '"' (~["\r\n])* '"';
 
 // Identifiers
 IDENTIFIER: Letter LetterOrDigit*;
