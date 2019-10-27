@@ -1,0 +1,25 @@
+actor A(5) {
+   knownactors {
+       A a;
+   }
+   actorvars {
+       int i;
+       boolean odd;
+   }
+
+   msghandler initial(int i2){
+       if(a == 2) {
+            for(;;) {
+                if(1 == 2) {
+                    a = 5;
+                } else {
+                    a = 6;
+                }
+            }
+
+       }
+   }
+}
+
+main {
+}
