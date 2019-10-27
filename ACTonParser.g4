@@ -104,20 +104,23 @@ commandLineSemi:
     ;
 
 forBlock:
-    FOR LPAR varAssigment? SEMI arithmeticStatement? SEMI varAssigment? RPAR
+	FOR { printLine("Loop:for) }
+    LPAR varAssigment? SEMI arithmeticStatement? SEMI varAssigment? RPAR
         newBlock
     ;
 
 ifBlock:
-    IF LPAR arithmeticStatement RPAR
+    IF { printLine("Conditional:if) }
+    LPAR arithmeticStatement RPAR
         newBlock
     ;
 
 ifElseBlock:
-    IF LPAR arithmeticStatement RPAR
+    IF { printLine("Conditional:if) }
+    LPAR arithmeticStatement RPAR
         newBlock
-    ELSE
-            newBlock
+    ELSE { printLine("Conditional:else) }
+        newBlock
     ;
 
 newBlock:
