@@ -117,7 +117,7 @@ curlyBlock:
     ;
 
 varAssigment:
-	IDENTIFIER ASSIGN ( argument )
+	IDENTIFIER ASSIGN argument
     ;
 
 knownActorsList:
@@ -125,7 +125,7 @@ knownActorsList:
     ;
 
 callArguments:
-    argument (COMMA argument)?
+    argument (COMMA callArguments)?
     ;
 
 argument:
@@ -134,7 +134,7 @@ argument:
     ;
 
 methodCall  :
-	(( (SELF | SENDER | IDENTIFIER) DOT IDENTIFIER) | PRINT)
+	(( idSelfSender DOT IDENTIFIER) | PRINT)
         LPAR
             callArguments?
         RPAR
@@ -179,7 +179,7 @@ addLessArithmeticStatement:
 
 multLessArithmeticStatement:
     //level 3 single operand pre
-	(prefixUnaryOperator IDENTIFIER)
+	(prefixUnaryOperator multLessArithmeticStatement )
     //level 2 using array blocks
     | (IDENTIFIER LBRACK arithmeticStatement RBRACK)
 	//level 2 single operand post
@@ -187,7 +187,11 @@ multLessArithmeticStatement:
     //level 1 parentheses
     | (LPAR arithmeticStatement RPAR)
     //level 0 single identifire or number
-	| (BOOL_LITERAL | INTEGER_LITERAL | SENDER | SELF | IDENTIFIER)
+	| (BOOL_LITERAL | INTEGER_LITERAL | STRING_LITERAL | idSelfSender |  (SELF DOT IDENTIFIER) )
+    ;
+
+idSelfSender:
+    SENDER | SELF | IDENTIFIER
     ;
 
 arguments:
@@ -212,7 +216,7 @@ multiplicativeOperator: MUL | DIV | AND;
 
 postfixUnaryOperator: INC | DEC;
 
-prefixUnaryOperator: INC | DEC | NOT;
+prefixUnaryOperator: INC | DEC | NOT | SUB;
 
 // Literals
 INTEGER_LITERAL: Digits;
