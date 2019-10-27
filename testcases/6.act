@@ -21,7 +21,7 @@ actor A(5) {
    }
 }
 
-actor B extends A {
+actor B extends A(7) {
     knownactors {
 
     }
