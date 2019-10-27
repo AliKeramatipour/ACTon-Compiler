@@ -67,13 +67,14 @@ msgHandlerDeclaration:
     ;
 
 msgHandlerBlock:
-	LCURLY
-        commandLine*
-    RCURLY
+	curlyBlockWithDeclaration
     ;
 
-commandLine:
-    varDeclaration | varAssigment | forBlock | ifElseBlock | singleLineIfElseBlock | BREAK
+curlyBlockWithDeclaration:
+    LCURLY
+        varDeclaration*
+        commandLine*
+    RCURLY
     ;
 
 varDeclaration:
@@ -81,12 +82,54 @@ varDeclaration:
     | INT IDENTIFIER LBRACK INTEGER_LITERAL RBRACK 
     ;
 
+commandLine:
+    forBlock | ifBlock | ifElseBlock | commandLineSemi
+    ;
+
+commandLineSemi:
+    (CONTINUE
+    | BREAK
+    | methodCall
+    | varAssigment)
+    SEMI 
+    ;
+
 forBlock:
-    FOR LPAR (varAssigment?) SEMI ( arithmeticStatement? ) SEMI (varAssigment?) RPAR
+    FOR LPAR (varAssigment?) SEMI (arithmeticStatement?) SEMI (varAssigment?) RPAR
+        newBlock
+    ;
+
+ifBlock:
+    IF LPAR arithmeticStatement RPAR
+        newBlock
+    ;
+
+ifElseBlock:
+    IF LPAR arithmeticStatement RPAR
+        newBlock
+    ELSE 
+        newBlock
+    ;
+
+newBlock:
+    (curlyBlock | commandLine)
+    ;
+
+methodCall:
+    (SELF | SENDER | IDENTIFIER) DOT IDENTIFIER 
+        LPAR
+            callArguments?
+        RPAR
+    ;
+
+curlyBlock:
+    LCURLY 
+        commandLine*
+    RCURLY
     ;
 
 varAssigment:
-    IDENTIFIER ASSIGN arithmeticStatement
+    IDENTIFIER ASSIGN (arithmeticStatement | STRING_LITERAL | BOOL_LITERAL)
     ;
 
 knownActorsList:
@@ -98,7 +141,8 @@ callArguments:
 	;
 
 arithmeticStatement: // without semi-colon at the end
-    //level 11 ??? aya 3 ta mosavi kenare ham mishe biad ? "a=b=c"
+    //level 11 few assigments
+    varAssigment
     //level 10 inlineIf
     | inLineIf
     //level 9 OR
@@ -121,7 +165,7 @@ arithmeticStatement: // without semi-colon at the end
     //level 1 parentheses
     | LPAR arithmeticStatement RPAR
     //level 0 single identifire or number
-    | Digitis | IDENTIFIER
+    | INTEGER_LITERAL | IDENTIFIER
     ;
 
 inLineIf:
