@@ -29,9 +29,9 @@ mainDeclaration:
 // First IDENTIFIER is Actor name
 actorInstantiation:
     IDENTIFIER IDENTIFIER
-	LPAR knownActorsList RPAR
+	LPAR knownActorsList? RPAR
     COLON
-    LPAR callArguments RPAR
+    LPAR callArguments? RPAR
     SEMI
     ;
 
@@ -116,7 +116,7 @@ newBlock:
     ;
 
 methodCall:
-	(((SELF | SENDER | IDENTIFIER) DOT)? PRINT | IDENTIFIER )
+	(((SELF | SENDER | IDENTIFIER) DOT)? (PRINT | IDENTIFIER) )
         LPAR
             callArguments?
         RPAR
@@ -129,7 +129,7 @@ curlyBlock:
     ;
 
 varAssigment:
-	IDENTIFIER ASSIGN ( BOOL_LITERAL | STRING_LITERAL| arithmeticStatement )
+	IDENTIFIER ASSIGN ( BOOL_LITERAL | STRING_LITERAL | arithmeticStatement )
     ;
 
 knownActorsList:
@@ -214,6 +214,13 @@ postfixUnaryOperator: INC | DEC;
 
 prefixUnaryOperator: INC | DEC | NOT;
 
+// Literals
+INTEGER_LITERAL: Digits;
+
+BOOL_LITERAL: TRUE | FALSE;
+
+STRING_LITERAL: '"' (~["\r\n])* '"';
+
 // Keywords
 MAIN: 'main';
 PRINT: 'print';
@@ -284,14 +291,6 @@ RCURLY: '}';
 
 COMMA: ',';
 DOT: '.';
-
-// Literals
-
-INTEGER_LITERAL: Digits;
-
-BOOL_LITERAL: TRUE | FALSE;
-
-STRING_LITERAL: '"' (~["\r\n])* '"';
 
 // Identifiers
 IDENTIFIER: Letter LetterOrDigit*;
