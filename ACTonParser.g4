@@ -192,7 +192,7 @@ arithmeticStatement: // without semi-colon at the end
     //level 10 inlineIf
 	| ( qMarkLessArithmeticStatement
 	(
-			QMARK { pushOperator($QMARK.text); pushOperator(":"); } arithmeticStatement
+			QMARK { pushOperator("?:"); } arithmeticStatement
                 COLON  arithmeticStatement
 	)? )
     { printStack(); }
