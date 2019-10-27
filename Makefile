@@ -1,4 +1,4 @@
-FLAGS= -diagnostics # -gui
+FLAGS= #-diagnostics # -gui
 
 .PHONY: clean build
 
@@ -11,6 +11,7 @@ build: clean ACTonParser.g4
 	java org.antlr.v4.gui.TestRig ACTonParser actonParser ${FLAGS} < testcases/3.act
 	java org.antlr.v4.gui.TestRig ACTonParser actonParser ${FLAGS} < testcases/4.act
 	java org.antlr.v4.gui.TestRig ACTonParser actonParser ${FLAGS} < testcases/5.act
+	make clean
 
 clean:
 	rm -rf *.class
