@@ -129,8 +129,7 @@ callArguments:
     ;
 
 argument:
-	BOOL_LITERAL
-	| STRING_LITERAL
+    STRING_LITERAL
 	| arithmeticStatement
     ;
 
@@ -188,7 +187,7 @@ multLessArithmeticStatement:
     //level 1 parentheses
     | (LPAR arithmeticStatement RPAR)
     //level 0 single identifire or number
-    | (INTEGER_LITERAL | SENDER | SELF | IDENTIFIER | BOOL_LITERAL)
+	| (BOOL_LITERAL | INTEGER_LITERAL | SENDER | SELF | IDENTIFIER)
     ;
 
 arguments:
