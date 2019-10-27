@@ -8,6 +8,10 @@ actor A(5) {
     }
 
    msghandler initial(int i2){
+       a = a + a * a;
+       a = a * a + a;
+       a = 5 + a * f / c;
+       // +5/*afc
        a = 2 == 3 ? 4 == 5 ? "HI" : "salam" : "bye";
        // a = b = c;
    }
