@@ -195,7 +195,7 @@ multLessArithmeticStatement:
     //level 1 parentheses
     | LPAR arithmeticStatement RPAR
     //level 0 single identifire or number
-    | INTEGER_LITERAL | IDENTIFIER
+    | INTEGER_LITERAL | SELF | SENDER | IDENTIFIER
     ;
 
 arguments:
