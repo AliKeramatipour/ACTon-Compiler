@@ -1,5 +1,23 @@
 grammar acton;
 
+@header{
+    package main.parsers;
+    import main.*;
+    //    import main.ast.* ;
+    import main.ast.node.*;
+    import main.ast.node.declaration.*;
+    import main.ast.node.declaration.handler.*;
+    import main.ast.node.expression.*;
+    import main.ast.node.expression.operators.*;
+    import main.ast.node.expression.values.*;
+    import main.ast.node.statement.*;
+    import main.ast.type.*;
+    import main.ast.type.actorType.*;
+    import main.ast.type.arrayType.*;
+    import main.ast.type.primitiveType.*;
+    import java.util.ArrayList;
+}
+
 program returns [Program p]
     : {$p = new Program();}
     (a = actorDeclaration { $p.addActor($a.actorDec); })+ m = mainDeclaration { $p.setMain(m.main); }
@@ -52,7 +70,7 @@ actorInstantiation
     ;
 
 initHandlerDeclaration
-	returns[InitHandlerDeclaration initHandlerDec]
+	returns [InitHandlerDeclaration initHandlerDec]
     :
 	    MSGHANDLER INITIAL
         { $initHandlerDec = new InitHandlerDeclaration($INITIAL.text); }
@@ -82,13 +100,13 @@ argDeclarations
         (COMMA varDeclaration { $args.add($varDeclaration.varDec); })* |
     ;
 
-varDeclarations returns[ArrayList<VarDeclaration> varDecs]
+varDeclarations returns [ArrayList<VarDeclaration> varDecs]
     :
 	{ $varDecs = new ArrayList<>(); }
     (varDeclaration SEMICOLON { $varDecs.add($varDeclaration.varDec); } )*
     ;
 
-varDeclaration returns[VarDeclaration varDec] locals [Type t, Identifier id]
+varDeclaration returns [VarDeclaration varDec] locals [Type t, Identifier id]
 :
 	(INT identifier { $t = new IntType(); $id = $identifier.identifier }
     | STRING identifier { $t = new StringType(); $id = $identifier.identifier }
@@ -98,59 +116,96 @@ varDeclaration returns[VarDeclaration varDec] locals [Type t, Identifier id]
     ;
 
 statement
-	returns[Statement stmt]
-    :	blockStmt
-    | 	printStmt
-    |  	assignStmt
-    |  	forStmt
-    |  	ifStmt
-    |  	continueStmt
-    |  	breakStmt
-    |  	msgHandlerCall
+	returns [Statement stmt]
+    :	blockStmt       { $stmt = $blockStmt.stmt; }
+    | 	printStmt       { $stmt = $printStmt.stmt; }
+    |  	assignStmt      { $stmt = $assignStmt.stmt; }
+    |  	forStmt         { $stmt = $forStmt.stmt; }
+    |  	ifStmt          { $stmt = $ifStmt.stmt; }
+    |  	continueStmt    { $stmt = $continueStmt.stmt; }
+    |  	breakStmt       { $stmt = $breakStmt.stmt; }
+    |  	msgHandlerCall  { $stmt = $msgHandlerCall.stmt; }
     ;
 
-blockStmt
-    : 	LBRACE (statement)* RBRACE
+blockStmt returns [Block stmt]
+    : { $stmt = new Block(); }
+    LBRACE
+        (statement { $stmt.addStatement($statement.statement); })*
+    RBRACE
     ;
 
-printStmt
-    : 	PRINT LPAREN expression RPAREN SEMICOLON
+//CHECK THIS PART
+printStmt returns [Print stmt]
+    :
+	PRINT LPAREN expression RPAREN SEMICOLON { $stmt = new Print($expression.exp); }
     ;
 
-assignStmt
-    :    assignment SEMICOLON
+assignStmt returns [Assign stmt]
+    : assignment SEMICOLON {$stmt = $assignment.stmt}
     ;
 
-assignment
-    :   orExpression ASSIGN expression
+assignment returns [Assign stmt]
+    :
+	orExpression ASSIGN expression { $stmt = new Assign($orExpression.exp, $expression.exp); }
     ;
 
-forStmt
-    : 	FOR LPAREN (assignment)? SEMICOLON (expression)? SEMICOLON (assignment)? RPAREN statement
+forStmt returns [For stmt]
+    :
+        { $stmt = new For(); }
+        FOR LPAREN
+            (assignment { $stmt.setInitialize($assignment.stmt); })?
+        SEMICOLON
+            (expression { $stmt.setCondition($expression.stmt); })?
+        SEMICOLON
+            (assignment { $stmt.setUpdate($assignment.stmt); })?
+        RPAREN
+            statement   { $stmt.setBody($statement.stmt); }
     ;
 
 ifStmt
+	returns [Conditional stmt]
     :   IF LPAREN expression RPAREN statement elseStmt
+        {
+            $stmt = new Conditional($expression.exp, $statement.stmt);
+		    if ($elseStmt.stmt != null)
+		        $stmt.setElseBody($elseStmt.stmt);
+        }
     ;
 
 elseStmt
-    : ELSE statement |
+	returns [Statement stmt]
+    : ELSE statement { $stmt = $statement.stmt; } |
     ;
 
 continueStmt
+	returns[Continue stmt]
     : 	CONTINUE SEMICOLON
+    { $stmt = new Continue(); }
     ;
 
 breakStmt
+	returns [Break stmt]
     : 	BREAK SEMICOLON
+    { $stmt = new Break(); }
     ;
 
 msgHandlerCall
-    :   (identifier | SELF | SENDER) DOT
-        identifier LPAREN expressionList RPAREN SEMICOLON
+	returns[MsgHandlerCall stmt]
+	locals[Expression instance]
+    :
+    (
+        identifier { $instance = $identifier.identifier; }
+        | SELF { $instance = new Self(); }
+        | SENDER { $instance = new Sender(); }
+    ) DOT
+        identifier { $stmt = new MsgHandlerCall($instance, $identifier.identifier); }
+        LPAREN
+            expressionList { $stmt.setArgs($expressionList.exps); }
+        RPAREN
+    SEMICOLON
     ;
 
-expression
+expression returns [Expression exp]
     :	orExpression (ASSIGN expression)?
     ;
 
@@ -212,15 +267,24 @@ actorVarAccess
     ;
 
 expressionList
-    :	(expression(COMMA expression)* | )
+	returns[ArrayList<Expression> exps]
+    :
+        { $exps = new ArrayList<>(); }
+        expression { $exps.add($expression.exp); }
+        (COMMA expression { $exps.add($expression.exp); })* |
+
     ;
 
 identifier returns [Identifier identifier]
     : IDENTIFIER {$identifier = new Identifier($IDENTIFIER.text); }
     ;
 
-value
-    :   INTVAL | STRINGVAL | TRUE | FALSE
+value returns [Value val]
+    :
+	INTVAL { $val = new IntValue($INTVAL.int, new IntType()); }
+    | STRINGVAL { $val = new StringValue($STRINGVAL.text, new StringType()); }
+    | TRUE { $val = new BooleanValue(true, new BooleanType()); }
+    | FALSE { $val = new BooleanValue(false, new BooleanType()); }
     ;
 
 // values
