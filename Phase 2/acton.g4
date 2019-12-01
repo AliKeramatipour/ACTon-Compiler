@@ -112,7 +112,9 @@ msgHandlerDeclaration
             { $handlerDec = new MsgHandlerDeclaration($identifier.id); }
         LPAREN
             argDeclarations
-            { $handlerDec.setArgs($argDeclarations.args); }
+            {
+                $handlerDec.setArgs($argDeclarations.args);
+            }
         RPAREN
        	LBRACE
             varDeclarations { $handlerDec.setLocalVars($varDeclarations.varDecs); }
@@ -123,14 +125,14 @@ msgHandlerDeclaration
 argDeclarations
 	returns [ArrayList<VarDeclaration> args]
     :
-        { $args = new ArrayList<>(); }
-        varDeclaration { $args.add($varDeclaration.varDec); }
-        (COMMA varDeclaration { $args.add($varDeclaration.varDec); })* |
+        { $args = new ArrayList<VarDeclaration>(); }
+        (varDeclaration { $args.add($varDeclaration.varDec); }
+        (COMMA varDeclaration { $args.add($varDeclaration.varDec); })* |)
     ;
 
 varDeclarations returns [ArrayList<VarDeclaration> varDecs]
     :
-	{ $varDecs = new ArrayList<>(); }
+	{ $varDecs = new ArrayList<VarDeclaration>(); }
     (varDeclaration SEMICOLON { $varDecs.add($varDeclaration.varDec); } )*
     ;
 
@@ -338,9 +340,9 @@ actorVarAccess
 expressionList
 	returns [ArrayList<Expression> exps]
     :
-        { $exps = new ArrayList<>(); }
-        expression { $exps.add($expression.exp); }
-        (COMMA expression { $exps.add($expression.exp); })* |
+        { $exps = new ArrayList<Expression>(); }
+        (expression { $exps.add($expression.exp); }
+        (COMMA expression { $exps.add($expression.exp); })* |)
 
     ;
 
