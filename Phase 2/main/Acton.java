@@ -5,8 +5,8 @@ import main.visitor.astPrinter.ASTPrinter;
 import main.visitor.nameAnalyser.NameAnalyser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
-import parsers.actonLexer;
-import parsers.actonParser;
+import main.parsers.actonLexer;
+import main.parsers.actonParser;
 
 import java.io.IOException;
 

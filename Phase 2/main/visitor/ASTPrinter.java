@@ -6,6 +6,8 @@ import main.ast.node.declaration.ActorDeclaration;
 import main.ast.node.declaration.ActorInstantiation;
 import main.ast.node.declaration.VarDeclaration;
 import main.ast.node.declaration.handler.HandlerDeclaration;
+import main.ast.node.declaration.handler.InitHandlerDeclaration;
+import main.ast.node.declaration.handler.MsgHandlerDeclaration;
 import main.ast.node.expression.*;
 import main.ast.node.expression.values.BooleanValue;
 import main.ast.node.expression.values.IntValue;
@@ -39,17 +41,14 @@ public class ASTPrinter implements Visitor {
     public void visit(ActorDeclaration actorDeclaration) {
         System.out.println(actorDeclaration.toString());
 
-        Identifier name = actorDeclaration.getName()
+        Identifier name = actorDeclaration.getName();
         if(name != null) {
             name.accept(this);
         }
 
         Identifier parentName = actorDeclaration.getParentName();
         if(parentName != null) {
-            parentName = parentName.getName();
-            if(parentName != null) {
-                parentName.accept(this);
-            }
+            parentName.accept(this);
         }
 
         ArrayList<VarDeclaration> varDecs = actorDeclaration.getKnownActors();
@@ -74,7 +73,7 @@ public class ASTPrinter implements Visitor {
         ArrayList<MsgHandlerDeclaration> msgHandlerDecs = actorDeclaration.getMsgHandlers();
         if(msgHandlerDecs != null) {
             for (MsgHandlerDeclaration msgHandlerDec : msgHandlerDecs) {
-                varDec.accept(this);
+                msgHandlerDec.accept(this);
             }
         }
 
@@ -85,26 +84,26 @@ public class ASTPrinter implements Visitor {
     public void visit(HandlerDeclaration handlerDeclaration) {
         System.out.println(handlerDeclaration.toString());
 
-        Identifier name = handlerDeclaration.getName()
+        Identifier name = handlerDeclaration.getName();
         if(name != null) {
             name.accept(this);
         }
 
-        ArrayList<VarDeclaration> varDecs = actorDeclaration.getArgs();
+        ArrayList<VarDeclaration> varDecs = handlerDeclaration.getArgs();
         if(varDecs != null) {
             for (VarDeclaration varDec : varDecs) {
                 varDec.accept(this);
             }
         }
 
-        varDecs = actorDeclaration.getLocalVars();
+        varDecs = handlerDeclaration.getLocalVars();
         if(varDecs != null) {
             for (VarDeclaration varDec : varDecs) {
                 varDec.accept(this);
             }
         }
 
-        ArrayList<Statement> stmts = actorDeclaration.getBody();
+        ArrayList<Statement> stmts = handlerDeclaration.getBody();
         if(stmts != null) {
             for (Statement stmt : stmts) {
                 stmt.accept(this);
@@ -144,7 +143,7 @@ public class ASTPrinter implements Visitor {
     public void visit(ActorInstantiation actorInstantiation) {
         System.out.println(actorInstantiation.toString());
 
-        Identifier id = varDeclaration.getIdentifier();
+        Identifier id = actorInstantiation.getIdentifier();
         if(id != null) {
             id.accept(this);
         }
