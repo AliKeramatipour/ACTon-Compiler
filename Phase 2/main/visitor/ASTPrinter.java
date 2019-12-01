@@ -12,40 +12,100 @@ import main.ast.node.expression.values.IntValue;
 import main.ast.node.expression.values.StringValue;
 import main.ast.node.statement.*;
 
+import java.util.ArrayList;
+
 public class ASTPrinter implements Visitor {
-
-    private void accpetIfNotNull(Node node) {
-        if(node != null) {
-            node.accpet(this);
-        }
-    }
-
-    private void accpetListIfNotNull(ArrayList<Node> nodes) {
-        if(nodes != null) {
-            for (Node node: nodes)
-                node.accpet(this);
-        }
-    }
 
     @Override
     public void visit(Program program) {
         System.out.println(program.toString());
 
         ArrayList<ActorDeclaration> actors = program.getActors();
-        this.accpetListIfNotNull(actors);
+        if(actors != null) {
+            for(ActorDeclaration actor: actors) {
+                actor.accept(this);
+            }
+        }
 
-        Node main = program.getMain();
-        this.accpetIfNotNull(main);
+        Main main = program.getMain();
+        if(main != null) {
+            main.accept(this);
+        }
     }
 
     @Override
     public void visit(ActorDeclaration actorDeclaration) {
         System.out.println(actorDeclaration.toString());
+
+        Identifier name = actorDeclaration.getName()
+        if(name != null) {
+            name.accept(this);
+        }
+
+        Identifier parentName = actorDeclaration.getParentName();
+        if(parentName != null) {
+            parentName = parentName.getName();
+            if(parentName != null) {
+                parentName.accept(this);
+            }
+        }
+
+        ArrayList<VarDeclaration> varDecs = actorDeclaration.getKnownActors();
+        if(varDecs != null) {
+            for (VarDeclaration varDec : varDecs) {
+                varDec.accept(this);
+            }
+        }
+
+        varDecs = actorDeclaration.getActorVars();
+        if(varDecs != null) {
+            for (VarDeclaration varDec : varDecs) {
+                varDec.accept(this);
+            }
+        }
+
+        InitHandlerDeclaration initHandlerDeclaration = actorDeclaration.getInitHandler();
+        if(initHandlerDeclaration != null){
+            initHandlerDeclaration.accept(this);
+        }
+
+        ArrayList<MsgHandlerDeclaration> msgHandlerDecs = actorDeclaration.getMsgHandlers();
+        if(msgHandlerDecs != null) {
+            for (MsgHandlerDeclaration msgHandlerDec : msgHandlerDecs) {
+                varDec.accept(this);
+            }
+        }
     }
 
     @Override
     public void visit(HandlerDeclaration handlerDeclaration) {
         System.out.println(handlerDeclaration.toString());
+
+        Identifier name = handlerDeclaration.getName()
+        if(name != null) {
+            name.accept(this);
+        }
+
+        ArrayList<VarDeclaration> varDecs = actorDeclaration.getArgs();
+        if(varDecs != null) {
+            for (VarDeclaration varDec : varDecs) {
+                varDec.accept(this);
+            }
+        }
+
+        varDecs = actorDeclaration.getLocalVars();
+        if(varDecs != null) {
+            for (VarDeclaration varDec : varDecs) {
+                varDec.accept(this);
+            }
+        }
+
+        ArrayList<Statement> stmts = actorDeclaration.getBody();
+        if(stmts != null) {
+            for (Statement stmt : stmts) {
+                stmt.accept(this);
+            }
+        }
     }
 
     @Override
