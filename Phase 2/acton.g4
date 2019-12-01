@@ -18,14 +18,16 @@ grammar acton;
 }
 
 program returns [Program p]
-    : {$p = new Program();}
+    : { $p = new Program(); }
     (actorDeclaration { $p.addActor($actorDeclaration.actorDec); })+
     mainDeclaration { $p.setMain($mainDeclaration.main); }
     ;
 
-actorDeclaration returns [ActorDeclaration actorDec]
+actorDeclaration
+	returns[ActorDeclaration actorDec]
+	locals[VarDeclaration varDec]
 :
-	ACTOR name = identifier {$actorDec = new ActorDeclaration($name.id); }
+	ACTOR name = identifier {$actorDec = new ActorDeclaration($name.id); $actorDec.setLine($ACTOR.getLine()); }
     (EXTENDS parent = identifier { $actorDec.setParentName($parent.id); })?
     LPAREN INTVAL { $actorDec.setQueueSize($INTVAL.int); } RPAREN
         LBRACE
@@ -35,12 +37,12 @@ actorDeclaration returns [ActorDeclaration actorDec]
 	    (
             actorType = identifier actorName = identifier SEMICOLON
             {
-                $actorDec.addKnownActor(
-                    new VarDeclaration(
-                        new Identifier($actorName.text),
-                        new ActorType($actorType.id)
-                    )
+                $varDec = new VarDeclaration(
+                    new Identifier($actorName.text),
+                    new ActorType($actorType.id)
                 );
+		        $varDec.setLine($actorType.id.getLine());
+                $actorDec.addKnownActor($varDec);
             }
         )*
         RBRACE)
@@ -58,7 +60,7 @@ actorDeclaration returns [ActorDeclaration actorDec]
 
 mainDeclaration returns [Main main]
     :   { $main = new Main(); }
-        MAIN
+        MAIN { $main.setLine($MAIN.getLine()); }
     	LBRACE
         (
             actorInstantiation
@@ -75,6 +77,7 @@ actorInstantiation
                 new ActorType($actorType.id),
                 $actorName.id
             );
+	        $actorInstance.setLine($actorType.id.getLine());
         }
      	LPAREN
         (
@@ -93,7 +96,10 @@ initHandlerDeclaration
 	returns [InitHandlerDeclaration handlerDec]
     :
 	    MSGHANDLER INITIAL
-        { $handlerDec = new InitHandlerDeclaration(new Identifier($INITIAL.text)); }
+        {
+            $handlerDec = new InitHandlerDeclaration(new Identifier($INITIAL.text));
+		    $handlerDec.setLine($MSGHANDLER.getLine());
+        }
         LPAREN
             argDeclarations
             { $handlerDec.setArgs($argDeclarations.args); }
@@ -108,7 +114,10 @@ msgHandlerDeclaration
 	returns [MsgHandlerDeclaration handlerDec]
     :
         MSGHANDLER identifier
-            { $handlerDec = new MsgHandlerDeclaration($identifier.id); }
+            {
+                $handlerDec = new MsgHandlerDeclaration($identifier.id);
+	            $handlerDec.setLine($MSGHANDLER.getLine());
+            }
         LPAREN
             argDeclarations
             {
@@ -137,11 +146,11 @@ varDeclarations returns [ArrayList<VarDeclaration> varDecs]
 
 varDeclaration returns [VarDeclaration varDec] locals [Type t, Identifier id]
 :
-	(INT identifier { $t = new IntType(); $id = $identifier.id; }
-    | STRING identifier { $t = new StringType(); $id = $identifier.id; }
-    | BOOLEAN identifier { $t = new BooleanType(); $id = $identifier.id; }
-    | INT identifier LBRACKET INTVAL RBRACKET { $t = new ArrayType($INTVAL.int); $id = $identifier.id; })
-    { $varDec = new VarDeclaration($id, $t); }
+	(INT identifier { $t = new IntType(); $t.setLine($INT.getLine()); $id = $identifier.id; }
+    | STRING identifier { $t = new StringType(); $t.setLine($STRING.getLine()); $id = $identifier.id; }
+    | BOOLEAN identifier { $t = new BooleanType(); $t.setLine($BOOLEAN.getLine()); $id = $identifier.id; }
+    | INT identifier LBRACKET INTVAL RBRACKET { $t = new ArrayType($INTVAL.int); $t.setLine($INT.getLine()); $id = $identifier.id; })
+    { $varDec = new VarDeclaration($id, $t); $varDec.setLine($t.getLine()); }
     ;
 
 statement
@@ -158,7 +167,7 @@ statement
 
 blockStmt returns [Block stmt]
     : { $stmt = new Block(); }
-    LBRACE
+    LBRACE { $stmt.setLine($LBRACE.getLine()); }
         (statement { $stmt.addStatement($statement.stmt); })*
     RBRACE
     ;
@@ -166,7 +175,7 @@ blockStmt returns [Block stmt]
 //CHECK THIS PART
 printStmt returns [Print stmt]
     :
-	PRINT LPAREN expression RPAREN SEMICOLON { $stmt = new Print($expression.exp); }
+	PRINT LPAREN expression RPAREN SEMICOLON { $stmt = new Print($expression.exp); $stmt.setLine($PRINT.getLine()); }
     ;
 
 assignStmt returns [Assign stmt]
@@ -175,13 +184,13 @@ assignStmt returns [Assign stmt]
 
 assignment returns [Assign stmt]
     :
-	orExpression ASSIGN expression { $stmt = new Assign($orExpression.exp, $expression.exp); }
+	orExpression ASSIGN expression { $stmt = new Assign($orExpression.exp, $expression.exp); $stmt.setLine($ASSIGN.getLine()); }
     ;
 
 forStmt returns [For stmt]
     :
-        { $stmt = new For(); }
-        FOR LPAREN
+        FOR { $stmt = new For(); $stmt.setLine($FOR.getLine()); }
+        LPAREN
             (assignment { $stmt.setInitialize($assignment.stmt); })?
         SEMICOLON
             (expression { $stmt.setCondition($expression.exp); })?
@@ -196,6 +205,7 @@ ifStmt
     :   IF LPAREN expression RPAREN statement elseStmt
         {
             $stmt = new Conditional($expression.exp, $statement.stmt);
+	        $stmt.setLine($IF.getLine());
 		    if ($elseStmt.stmt != null)
 		        $stmt.setElseBody($elseStmt.stmt);
         }
@@ -203,19 +213,28 @@ ifStmt
 
 elseStmt
 	returns [Statement stmt]
-    : ELSE statement { $stmt = $statement.stmt; } |
+    : ELSE statement {
+        $stmt = $statement.stmt;
+        $stmt.setLine($ELSE.getLine());
+    } |
     ;
 
 continueStmt
 	returns [Continue stmt]
     : 	CONTINUE SEMICOLON
-    { $stmt = new Continue(); }
+    {
+        $stmt = new Continue();
+	    $stmt.setLine($CONTINUE.getLine());
+    }
     ;
 
 breakStmt
 	returns [Break stmt]
     : 	BREAK SEMICOLON
-    { $stmt = new Break(); }
+    {
+        $stmt = new Break();
+	    $stmt.setLine($BREAK.getLine());
+    }
     ;
 
 msgHandlerCall
@@ -224,10 +243,11 @@ msgHandlerCall
     :
     (
         identifier { $instance = $identifier.id; }
-        | SELF { $instance = new Self(); }
-        | SENDER { $instance = new Sender(); }
+        | SELF { $instance = new Self(); $instance.setLine($SELF.getLine()); }
+        | SENDER { $instance = new Sender(); $instance.setLine($SENDER.getLine()); }
     ) DOT
-        identifier { $stmt = new MsgHandlerCall($instance, $identifier.id); }
+        // TODO: check set line
+        identifier { $stmt = new MsgHandlerCall($instance, $identifier.id); $stmt.setLine($instance.getLine()); }
         LPAREN
             expressionList { $stmt.setArgs($expressionList.exps); }
         RPAREN
@@ -237,74 +257,81 @@ msgHandlerCall
 expression
     returns [Expression exp]
     :	orExpression { $exp = $orExpression.exp; }
-        (ASSIGN expression { $exp = new BinaryExpression($exp, $expression.exp, BinaryOperator.assign); } )?
+        (ASSIGN expression { $exp = new BinaryExpression($exp, $expression.exp, BinaryOperator.assign); $exp.setLine($ASSIGN.getLine()); } )?
     ;
 
 orExpression
 	returns [Expression exp]
     :	andExpression { $exp = $andExpression.exp; }
-        (OR andExpression { $exp = new BinaryExpression($exp, $andExpression.exp, BinaryOperator.or); } )*
+        (OR andExpression { $exp = new BinaryExpression($exp, $andExpression.exp, BinaryOperator.or); $exp.setLine($OR.getLine()); } )*
     ;
 
 andExpression
 	returns [Expression exp]
     :	equalityExpression { $exp = $equalityExpression.exp; }
-        (AND equalityExpression { $exp = new BinaryExpression($exp, $equalityExpression.exp, BinaryOperator.and); } )*
+        (AND equalityExpression { $exp = new BinaryExpression($exp, $equalityExpression.exp, BinaryOperator.and); $exp.setLine($AND.getLine()); } )*
     ;
 
 equalityExpression
 	returns [Expression exp]
-    locals [BinaryOperator op]
+    locals [BinaryOperator op, int line]
     : relationalExpression { $exp = $relationalExpression.exp; }
-        ( (EQ { $op = BinaryOperator.eq; } | NEQ { $op = BinaryOperator.neq; })
-        relationalExpression { $exp = new BinaryExpression($exp, $relationalExpression.exp, $op); })*
+        ( (EQ { $op = BinaryOperator.eq; $line = $EQ.getLine(); } | NEQ { $op = BinaryOperator.neq; $line = $NEQ.getLine(); })
+        relationalExpression { $exp = new BinaryExpression($exp, $relationalExpression.exp, $op); $exp.setLine($line); })*
     ;
 
 relationalExpression
 	returns [Expression exp]
-    locals [BinaryOperator op]
+	locals[BinaryOperator op, int line]
     : additiveExpression { $exp = $additiveExpression.exp; }
 (
-	( LT { $op = BinaryOperator.lt; } | GT { $op = BinaryOperator.gt; })
-        additiveExpression { $exp = new BinaryExpression($exp, $additiveExpression.exp, $op); })*
+	( LT { $op = BinaryOperator.lt; $line = $LT.getLine(); } | GT { $op = BinaryOperator.gt; $line = $GT.getLine(); })
+        additiveExpression { $exp = new BinaryExpression($exp, $additiveExpression.exp, $op); $exp.setLine($line); })*
     ;
 
 additiveExpression
 	returns [Expression exp]
-    locals [BinaryOperator op]
+    locals [BinaryOperator op, int line]
     : multiplicativeExpression { $exp = $multiplicativeExpression.exp; }
 (
-	( PLUS { $op = BinaryOperator.add; } | MINUS { $op = BinaryOperator.sub; })
-        multiplicativeExpression { $exp = new BinaryExpression($exp, $multiplicativeExpression.exp, $op); })*
+	( PLUS { $op = BinaryOperator.add; $line = $PLUS.getLine(); } | MINUS { $op = BinaryOperator.sub; $line = $MINUS.getLine(); })
+        multiplicativeExpression { $exp = new BinaryExpression($exp, $multiplicativeExpression.exp, $op); $exp.setLine($line); })*
     ;
 
 multiplicativeExpression
 	returns [Expression exp]
-    locals [BinaryOperator op]
+    locals [BinaryOperator op, int line]
     : preUnaryExpression { $exp = $preUnaryExpression.exp; }
-(
-	(
-		MULT { $op = BinaryOperator.mult; } | DIV { $op = BinaryOperator.div; } | PERCENT { $op = BinaryOperator.mod; })
-        preUnaryExpression { $exp = new BinaryExpression($exp, $preUnaryExpression.exp, $op); })*
+    (
+        (
+            MULT { $op = BinaryOperator.mult; $line = $MULT.getLine(); }
+            | DIV { $op = BinaryOperator.div; $line = $DIV.getLine(); }
+            | PERCENT { $op = BinaryOperator.mod; $line = $line = $PERCENT.getLine(); }
+        )
+        preUnaryExpression { $exp = new BinaryExpression($exp, $preUnaryExpression.exp, $op); $exp.setLine($line); }
+    )*
     ;
 
 preUnaryExpression
 	returns [Expression exp]
-    :   NOT preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.not, $preUnaryExpression.exp); }
-    |   MINUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.minus, $preUnaryExpression.exp); }
-    |   PLUSPLUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.preinc, $preUnaryExpression.exp); }
-    |   MINUSMINUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.predec, $preUnaryExpression.exp); }
+    :   NOT preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.not, $preUnaryExpression.exp); $exp.setLine($NOT.getLine()); }
+    |   MINUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.minus, $preUnaryExpression.exp); $exp.setLine($MINUS.getLine()); }
+    |   PLUSPLUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.preinc, $preUnaryExpression.exp); $exp.setLine($PLUSPLUS.getLine()); }
+    |   MINUSMINUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.predec, $preUnaryExpression.exp); $exp.setLine($MINUSMINUS.getLine()); }
     |   postUnaryExpression { $exp = $postUnaryExpression.exp; }
     ;
 
 postUnaryExpression
 	returns[Expression exp]
-	locals[UnaryOperator op]
+	locals[UnaryOperator op, int line]
     :
 	    otherExpression { $exp = $otherExpression.exp; }
         (
-            (PLUSPLUS { $op = UnaryOperator.postinc; } | MINUSMINUS { $op = UnaryOperator.preinc; })
-            { $exp = new UnaryExpression($op, $exp); }
+	        (
+		        PLUSPLUS { $op = UnaryOperator.postinc; $line = $PLUSPLUS.getLine(); }
+		        | MINUSMINUS { $op = UnaryOperator.preinc; $line = $MINUSMINUS.getLine(); }
+            )
+            { $exp = new UnaryExpression($op, $exp); $exp.setLine($line); }
         )?
     ;
 
@@ -315,7 +342,7 @@ otherExpression
     | arrayCall { $exp = $arrayCall.exp; }
     | actorVarAccess { $exp = $actorVarAccess.exp; }
     | value { $exp = $value.val; }
-    | SENDER { $exp = new Sender(); }
+    | SENDER { $exp = new Sender(); $exp.setLine($SENDER.getLine()); }
     ;
 
 arrayCall
@@ -327,13 +354,13 @@ arrayCall
         | actorVarAccess { $arrayInstance = $actorVarAccess.exp; }
     )
     LBRACKET
-        expression { $exp = new ArrayCall($arrayInstance, $expression.exp);}
+        expression { $exp = new ArrayCall($arrayInstance, $expression.exp); $exp.setLine($arrayInstance.getLine()); }
     RBRACKET
     ;
 
 actorVarAccess
 	returns [ActorVarAccess exp]
-    : SELF DOT identifier { $exp = new ActorVarAccess($identifier.id); }
+    : SELF DOT identifier { $exp = new ActorVarAccess($identifier.id); $exp.setLine($SELF.getLine()); }
     ;
 
 expressionList
@@ -346,15 +373,16 @@ expressionList
     ;
 
 identifier returns [Identifier id]
-    : IDENTIFIER {$id = new Identifier($IDENTIFIER.text); }
+    :
+	IDENTIFIER {$id = new Identifier($IDENTIFIER.text); $id.setLine($IDENTIFIER.getLine()); }
     ;
 
 value returns [Value val]
     :
-	INTVAL { $val = new IntValue($INTVAL.int, new IntType()); }
-    | STRINGVAL { $val = new StringValue($STRINGVAL.text, new StringType()); }
-    | TRUE { $val = new BooleanValue(true, new BooleanType()); }
-    | FALSE { $val = new BooleanValue(false, new BooleanType()); }
+	INTVAL { $val = new IntValue($INTVAL.int, new IntType()); $val.setLine($INTVAL.getLine()); }
+    | STRINGVAL { $val = new StringValue($STRINGVAL.text, new StringType()); $val.setLine($STRINGVAL.getLine()); }
+    | TRUE { $val = new BooleanValue(true, new BooleanType()); $val.setLine($TRUE.getLine()); }
+    | FALSE { $val = new BooleanValue(false, new BooleanType()); $val.setLine($FALSE.getLine()); }
     ;
 
 // values
