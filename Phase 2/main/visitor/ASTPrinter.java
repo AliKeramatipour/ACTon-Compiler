@@ -215,14 +215,14 @@ public class ASTPrinter implements Visitor {
     public void visit(ActorVarAccess actorVarAccess) {
         System.out.println(actorVarAccess.toString());
 
-        Identifier varName = actorVarAccess.getVariable();
-        if(varName != null) {
-            varName.accept(this);
-        }
-
         Self self = actorVarAccess.getSelf();
         if(self != null) {
             self.accept(this);
+        }
+
+        Identifier varName = actorVarAccess.getVariable();
+        if(varName != null) {
+            varName.accept(this);
         }
 
         return;
@@ -389,12 +389,12 @@ public class ASTPrinter implements Visitor {
 
         Expression lValue = assign.getlValue();
         if(lValue != null){
-            lValue.accept(null);
+            lValue.accept(this);
         }
 
         Expression rValue = assign.getrValue();
         if(rValue != null){
-            rValue.accept(null);
+            rValue.accept(this);
         }
 
         return;
