@@ -50,7 +50,7 @@ public class NameAnalyser implements Visitor {
         SymbolTable.push(new SymbolTable(SymbolTable.top, actorDeclaration.getName().getName()));
 
         if (actorDeclaration.getQueueSize() < 1) {
-            System.out.println("Line:" + actorDeclaration.getLine() + ":Queue size must be positive " + actorDeclaration.getName().getName());
+            System.out.println("Line:" + actorDeclaration.getLine() + ":Queue size must be positive");
         }
 
         Identifier name = actorDeclaration.getName();
@@ -149,7 +149,7 @@ public class NameAnalyser implements Visitor {
     public void visit(VarDeclaration varDeclaration) {
         if (varDeclaration.isArrayDeclaration()) {
             if (((ArrayType) varDeclaration.getType()).getSize() < 1) {
-                System.out.println("Line:" + varDeclaration.getLine() + ":Array size must be positive " + varDeclaration.getIdentifier().getName());
+                System.out.println("Line:" + varDeclaration.getLine() + ":Array size must be positive");
             }
         }
 

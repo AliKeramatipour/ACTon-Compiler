@@ -13,7 +13,7 @@ import java.io.IOException;
 // Visit https://stackoverflow.com/questions/26451636/how-do-i-use-antlr-generated-parser-and-lexer
 public class Acton {
     public static void main(String[] args) throws IOException {
-        CharStream reader = CharStreams.fromFileName(args[1]);
+        CharStream reader = CharStreams.fromFileName(args[0]);
         actonLexer lexer = new actonLexer(reader);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         actonParser parser = new actonParser(tokens);
