@@ -1,8 +1,8 @@
 package main;
 
 import main.ast.node.Program;
-import main.visitor.astPrinter.ASTPrinter;
-import main.visitor.nameAnalyser.NameAnalyser;
+import main.visitor.ASTPrinter;
+import main.visitor.NameAnalyser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import main.parsers.actonLexer;
