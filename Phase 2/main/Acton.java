@@ -19,5 +19,7 @@ public class Acton {
         actonParser parser = new actonParser(tokens);
         Program program = parser.program().p; /* assuming that the name of the Program ast node
                                                  that the program rule returns is p */
+        program.accept(new ASTPrinter());
+        program.accept(new NameAnalyser());
     }
 }

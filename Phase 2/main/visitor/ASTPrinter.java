@@ -14,124 +14,142 @@ import main.ast.node.statement.*;
 
 public class ASTPrinter implements Visitor {
 
+    private void accpetIfNotNull(Node node) {
+        if(node != null) {
+            node.accpet(this);
+        }
+    }
+
+    private void accpetListIfNotNull(ArrayList<Node> nodes) {
+        if(nodes != null) {
+            for (Node node: nodes)
+                node.accpet(this);
+        }
+    }
+
     @Override
     public void visit(Program program) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(program.toString());
 
+        ArrayList<ActorDeclaration> actors = program.getActors();
+        this.accpetListIfNotNull(actors);
+
+        Node main = program.getMain();
+        this.accpetIfNotNull(main);
     }
 
     @Override
     public void visit(ActorDeclaration actorDeclaration) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(actorDeclaration.toString());
     }
 
     @Override
     public void visit(HandlerDeclaration handlerDeclaration) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(handlerDeclaration.toString());
     }
 
     @Override
     public void visit(VarDeclaration varDeclaration) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(varDeclaration.toString());
     }
 
     @Override
     public void visit(Main mainActors) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(mainActors.toString());
     }
 
     @Override
     public void visit(ActorInstantiation actorInstantiation) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(actorInstantiation.toString());
     }
 
     @Override
     public void visit(UnaryExpression unaryExpression) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(unaryExpression.toString());
     }
 
     @Override
     public void visit(BinaryExpression binaryExpression) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(binaryExpression.toString());
     }
 
     @Override
     public void visit(ArrayCall arrayCall) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(arrayCall.toString());
     }
 
     @Override
     public void visit(ActorVarAccess actorVarAccess) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(actorVarAccess.toString());
     }
 
     @Override
     public void visit(Identifier identifier) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(identifier.toString());
     }
 
     @Override
     public void visit(Self self) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(self.toString());
     }
 
     @Override
     public void visit(Sender sender) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(sender.toString());
     }
 
     @Override
     public void visit(BooleanValue value) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(value.toString());
     }
 
     @Override
     public void visit(IntValue value) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(value.toString());
     }
 
     @Override
     public void visit(StringValue value) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(value.toString());
     }
 
     @Override
     public void visit(Block block) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(block.toString());
     }
 
     @Override
     public void visit(Conditional conditional) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(conditional.toString());
     }
 
     @Override
     public void visit(For loop) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(loop.toString());
     }
 
     @Override
     public void visit(Break breakLoop) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(breakLoop.toString());
     }
 
     @Override
     public void visit(Continue continueLoop) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(continueLoop.toString());
     }
 
     @Override
     public void visit(MsgHandlerCall msgHandlerCall) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(msgHandlerCall.toString());
     }
 
     @Override
     public void visit(Print print) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(print.toString());
     }
 
     @Override
     public void visit(Assign assign) {
-        //TODO: implement appropriate visit functionality
+        System.out.println(assign.toString());
     }
 }

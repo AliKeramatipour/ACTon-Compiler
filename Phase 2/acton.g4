@@ -3,7 +3,6 @@ grammar acton;
 @header{
     package main.parsers;
     import main.*;
-    //    import main.ast.* ;
     import main.ast.node.*;
     import main.ast.node.declaration.*;
     import main.ast.node.declaration.handler.*;
