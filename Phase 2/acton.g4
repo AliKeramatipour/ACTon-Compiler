@@ -20,13 +20,14 @@ grammar acton;
 
 program returns [Program p]
     : {$p = new Program();}
-    (a = actorDeclaration { $p.addActor($a.actorDec); })+ m = mainDeclaration { $p.setMain(m.main); }
+    (actorDeclaration { $p.addActor($actorDeclaration.actorDec); })+
+    mainDeclaration { $p.setMain($mainDeclaration.main); }
     ;
 
 actorDeclaration returns [ActorDeclaration actorDec]
 :
-	ACTOR name = identifier {$actorDec = new ActorDeclaration($name.identifier); }
-    (EXTENDS parent = identifier { $actorDec.setParent($parent.identifier); })?
+	ACTOR name = identifier {$actorDec = new ActorDeclaration($name.id); }
+    (EXTENDS parent = identifier { $actorDec.setParentName($parent.id); })?
     LPAREN INTVAL { $actorDec.setQueueSize($INTVAL.int); } RPAREN
         LBRACE
 
@@ -38,7 +39,7 @@ actorDeclaration returns [ActorDeclaration actorDec]
                 $actorDec.addKnownActor(
                     new VarDeclaration(
                         new Identifier($actorName.text),
-                        new ActorType($actorType.text)
+                        new ActorType($actorType.id)
                     )
                 );
             }
@@ -50,45 +51,72 @@ actorDeclaration returns [ActorDeclaration actorDec]
             varDeclarations { $actorDec.setActorVars($varDeclarations.varDecs); }
         RBRACE)
 
-        (initHandlerDeclaration)?
-        (msgHandlerDeclaration)*
+        (initHandlerDeclaration { $actorDec.setInitHandler($initHandlerDeclaration.handlerDec); } )?
+        (msgHandlerDeclaration { $actorDec.addMsgHandler($msgHandlerDeclaration.handlerDec); })*
 
         RBRACE
     ;
 
 mainDeclaration returns [Main main]
-    :   MAIN
+    :   { $main = new Main(); }
+        MAIN
     	LBRACE
-        actorInstantiation*
+        (
+            actorInstantiation
+            { $main.addActorInstantiation($actorInstantiation.actorInstance); }
+        )*
     	RBRACE
     ;
 
 actorInstantiation
-    :	identifier identifier
-     	LPAREN (identifier(COMMA identifier)* | ) RPAREN
-     	COLON LPAREN expressionList RPAREN SEMICOLON
+	returns [ActorInstantiation actorInstance]
+    :	actorType = identifier actorName = identifier
+        {
+            $actorInstance = new ActorInstantiation(
+                new ActorType($actorType.id),
+                $actorName.id
+            );
+        }
+     	LPAREN
+        (
+	        identifier { $actorInstance.addKnownActor($identifier.id); }
+            (COMMA identifier { $actorInstance.addKnownActor($identifier.id); })*
+            |
+        )
+        RPAREN
+     	COLON
+        LPAREN
+            expressionList { $actorInstance.setInitArgs($expressionList.exps); }
+        RPAREN SEMICOLON
     ;
 
 initHandlerDeclaration
-	returns [InitHandlerDeclaration initHandlerDec]
+	returns [InitHandlerDeclaration handlerDec]
     :
 	    MSGHANDLER INITIAL
-        { $initHandlerDec = new InitHandlerDeclaration($INITIAL.text); }
+        { $handlerDec = new InitHandlerDeclaration(new Identifier($INITIAL.text)); }
         LPAREN
             argDeclarations
-            { $initHandlerDec.setArgs($argDeclarations.args); }
+            { $handlerDec.setArgs($argDeclarations.args); }
         RPAREN
      	LBRACE
-        varDeclarations { $initHandlerDec.setLocalVars($varDeclarations.varDecs); }
-        (statement { $initHandlerDec.addStatement($statement.stmt); })*
+            varDeclarations { $handlerDec.setLocalVars($varDeclarations.varDecs); }
+            (statement { $handlerDec.addStatement($statement.stmt); })*
      	RBRACE
     ;
 
 msgHandlerDeclaration
-    :	MSGHANDLER identifier LPAREN argDeclarations RPAREN
+	returns [MsgHandlerDeclaration handlerDec]
+    :
+        MSGHANDLER identifier
+            { $handlerDec = new MsgHandlerDeclaration($identifier.id); }
+        LPAREN
+            argDeclarations
+            { $handlerDec.setArgs($argDeclarations.args); }
+        RPAREN
        	LBRACE
-       	varDeclarations
-       	(statement)*
+            varDeclarations { $handlerDec.setLocalVars($varDeclarations.varDecs); }
+            (statement { $handlerDec.addStatement($statement.stmt); })*
        	RBRACE
     ;
 
@@ -108,11 +136,11 @@ varDeclarations returns [ArrayList<VarDeclaration> varDecs]
 
 varDeclaration returns [VarDeclaration varDec] locals [Type t, Identifier id]
 :
-	(INT identifier { $t = new IntType(); $id = $identifier.identifier }
-    | STRING identifier { $t = new StringType(); $id = $identifier.identifier }
-    | BOOLEAN identifier { $t = new BooleanType(); $id = $identifier.identifier }
-    | INT identifier LBRACKET INTVAL RBRACKET { $t = new ArrayType(); $t.setSize($INTVAL.int); $id = $identifier.identifier })
-    {$varDec = new VarDeclaration($id, $t);}
+	(INT identifier { $t = new IntType(); $id = $identifier.id; }
+    | STRING identifier { $t = new StringType(); $id = $identifier.id; }
+    | BOOLEAN identifier { $t = new BooleanType(); $id = $identifier.id; }
+    | INT identifier LBRACKET INTVAL RBRACKET { $t = new ArrayType($INTVAL.int); $id = $identifier.id; })
+    { $varDec = new VarDeclaration($id, $t); }
     ;
 
 statement
@@ -130,7 +158,7 @@ statement
 blockStmt returns [Block stmt]
     : { $stmt = new Block(); }
     LBRACE
-        (statement { $stmt.addStatement($statement.statement); })*
+        (statement { $stmt.addStatement($statement.stmt); })*
     RBRACE
     ;
 
@@ -141,7 +169,7 @@ printStmt returns [Print stmt]
     ;
 
 assignStmt returns [Assign stmt]
-    : assignment SEMICOLON {$stmt = $assignment.stmt}
+    : assignment SEMICOLON { $stmt = $assignment.stmt; }
     ;
 
 assignment returns [Assign stmt]
@@ -155,7 +183,7 @@ forStmt returns [For stmt]
         FOR LPAREN
             (assignment { $stmt.setInitialize($assignment.stmt); })?
         SEMICOLON
-            (expression { $stmt.setCondition($expression.stmt); })?
+            (expression { $stmt.setCondition($expression.exp); })?
         SEMICOLON
             (assignment { $stmt.setUpdate($assignment.stmt); })?
         RPAREN
@@ -178,7 +206,7 @@ elseStmt
     ;
 
 continueStmt
-	returns[Continue stmt]
+	returns [Continue stmt]
     : 	CONTINUE SEMICOLON
     { $stmt = new Continue(); }
     ;
@@ -190,84 +218,125 @@ breakStmt
     ;
 
 msgHandlerCall
-	returns[MsgHandlerCall stmt]
+	returns [MsgHandlerCall stmt]
 	locals[Expression instance]
     :
     (
-        identifier { $instance = $identifier.identifier; }
+        identifier { $instance = $identifier.id; }
         | SELF { $instance = new Self(); }
         | SENDER { $instance = new Sender(); }
     ) DOT
-        identifier { $stmt = new MsgHandlerCall($instance, $identifier.identifier); }
+        identifier { $stmt = new MsgHandlerCall($instance, $identifier.id); }
         LPAREN
             expressionList { $stmt.setArgs($expressionList.exps); }
         RPAREN
     SEMICOLON
     ;
 
-expression returns [Expression exp]
-    :	orExpression (ASSIGN expression)?
+expression
+    returns [Expression exp]
+    :	orExpression { $exp = $orExpression.exp; }
+        (ASSIGN expression { $exp = new BinaryExpression($exp, $expression.exp, BinaryOperator.assign); } )?
     ;
 
 orExpression
-    :	andExpression (OR andExpression)*
+	returns [Expression exp]
+    :	andExpression { $exp = $andExpression.exp; }
+        (OR andExpression { $exp = new BinaryExpression($exp, $andExpression.exp, BinaryOperator.or); } )*
     ;
 
 andExpression
-    :	equalityExpression (AND equalityExpression)*
+	returns [Expression exp]
+    :	equalityExpression { $exp = $equalityExpression.exp; }
+        (AND equalityExpression { $exp = new BinaryExpression($exp, $equalityExpression.exp, BinaryOperator.and); } )*
     ;
 
 equalityExpression
-    :	relationalExpression ( (EQ | NEQ) relationalExpression)*
+	returns [Expression exp]
+    locals [BinaryOperator op]
+    : relationalExpression { $exp = $relationalExpression.exp; }
+        ( (EQ { $op = BinaryOperator.eq; } | NEQ { $op = BinaryOperator.neq; })
+        relationalExpression { $exp = new BinaryExpression($exp, $relationalExpression.exp, $op); })*
     ;
 
 relationalExpression
-    : additiveExpression ((LT | GT) additiveExpression)*
+	returns [Expression exp]
+    locals [BinaryOperator op]
+    : additiveExpression { $exp = $additiveExpression.exp; }
+(
+	( LT { $op = BinaryOperator.lt; } | GT { $op = BinaryOperator.gt; })
+        additiveExpression { $exp = new BinaryExpression($exp, $additiveExpression.exp, $op); })*
     ;
 
 additiveExpression
-    : multiplicativeExpression ((PLUS | MINUS) multiplicativeExpression)*
+	returns [Expression exp]
+    locals [BinaryOperator op]
+    : multiplicativeExpression { $exp = $multiplicativeExpression.exp; }
+(
+	( PLUS { $op = BinaryOperator.add; } | MINUS { $op = BinaryOperator.sub; })
+        multiplicativeExpression { $exp = new BinaryExpression($exp, $multiplicativeExpression.exp, $op); })*
     ;
 
 multiplicativeExpression
-    : preUnaryExpression ((MULT | DIV | PERCENT) preUnaryExpression)*
+	returns [Expression exp]
+    locals [BinaryOperator op]
+    : preUnaryExpression { $exp = $preUnaryExpression.exp; }
+(
+	(
+		MULT { $op = BinaryOperator.mult; } | DIV { $op = BinaryOperator.div; } | PERCENT { $op = BinaryOperator.mod; })
+        preUnaryExpression { $exp = new BinaryExpression($exp, $preUnaryExpression.exp, $op); })*
     ;
 
 preUnaryExpression
-    :   NOT preUnaryExpression
-    |   MINUS preUnaryExpression
-    |   PLUSPLUS preUnaryExpression
-    |   MINUSMINUS preUnaryExpression
-    |   postUnaryExpression
+	returns [Expression exp]
+    :   NOT preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.not, $preUnaryExpression.exp); }
+    |   MINUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.minus, $preUnaryExpression.exp); }
+    |   PLUSPLUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.preinc, $preUnaryExpression.exp); }
+    |   MINUSMINUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.predec, $preUnaryExpression.exp); }
+    |   postUnaryExpression { $exp = $postUnaryExpression.exp; }
     ;
 
 postUnaryExpression
-    :   otherExpression (postUnaryOp)?
-    ;
-
-postUnaryOp
-    :	PLUSPLUS | MINUSMINUS
+	returns[Expression exp]
+	locals[UnaryOperator op]
+    :
+	    otherExpression { $exp = $otherExpression.exp; }
+        (
+            (PLUSPLUS { $op = UnaryOperator.postinc; } | MINUSMINUS { $op = UnaryOperator.preinc; })
+            { $exp = new UnaryExpression($op, $exp); }
+        )?
     ;
 
 otherExpression
-    :    LPAREN expression RPAREN
-    |    identifier
-    |    arrayCall
-    |    actorVarAccess
-    |    value
-    |    SENDER
+	returns [Expression exp]
+    : LPAREN expression { $exp = $expression.exp; } RPAREN
+	| identifier { $exp = $identifier.id; }
+    | arrayCall { $exp = $arrayCall.exp; }
+    | actorVarAccess { $exp = $actorVarAccess.exp; }
+    | value { $exp = $value.val; }
+    | SENDER { $exp = new Sender(); }
     ;
 
 arrayCall
-    :   (identifier | actorVarAccess) LBRACKET expression RBRACKET
+	returns [ArrayCall exp]
+    locals [Expression arrayInstance]
+    :
+	(
+		identifier { $arrayInstance = $identifier.id; }
+        | actorVarAccess { $arrayInstance = $actorVarAccess.exp; }
+    )
+    LBRACKET
+        expression { $exp = new ArrayCall($arrayInstance, $expression.exp);}
+    RBRACKET
     ;
 
 actorVarAccess
-    :   SELF DOT identifier
+	returns [ActorVarAccess exp]
+    : SELF DOT identifier { $exp = new ActorVarAccess($identifier.id); }
     ;
 
 expressionList
-	returns[ArrayList<Expression> exps]
+	returns [ArrayList<Expression> exps]
     :
         { $exps = new ArrayList<>(); }
         expression { $exps.add($expression.exp); }
@@ -275,8 +344,8 @@ expressionList
 
     ;
 
-identifier returns [Identifier identifier]
-    : IDENTIFIER {$identifier = new Identifier($IDENTIFIER.text); }
+identifier returns [Identifier id]
+    : IDENTIFIER {$id = new Identifier($IDENTIFIER.text); }
     ;
 
 value returns [Value val]
