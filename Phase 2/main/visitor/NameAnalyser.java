@@ -14,6 +14,7 @@ import main.ast.node.expression.values.IntValue;
 import main.ast.node.expression.values.StringValue;
 import main.ast.node.statement.*;
 
+import main.ast.type.arrayType.ArrayType;
 import main.symbolTable.SymbolTable;
 import main.symbolTable.SymbolTableActorItem;
 import main.symbolTable.SymbolTableHandlerItem;
@@ -27,7 +28,7 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(Program program) {
-        System.out.println(program.toString());
+        SymbolTable.root = new SymbolTable();
 
         ArrayList<ActorDeclaration> actors = program.getActors();
         if(actors != null) {
@@ -46,7 +47,11 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(ActorDeclaration actorDeclaration) {
-        System.out.println(actorDeclaration.toString());
+        SymbolTable.push(new SymbolTable(SymbolTable.top, actorDeclaration.getName().getName()));
+
+        if (actorDeclaration.getQueueSize() < 1) {
+            System.out.println("Line:" + actorDeclaration.getLine() + ":Queue size must be positive " + actorDeclaration.getName().getName());
+        }
 
         Identifier name = actorDeclaration.getName();
         if(name != null) {
@@ -84,12 +89,22 @@ public class NameAnalyser implements Visitor {
             }
         }
 
+        SymbolTableActorItem actorItem = new SymbolTableActorItem(actorDeclaration);
+        actorItem.setActorSymbolTable(SymbolTable.top);
+        SymbolTable.pop();
+
+        try {
+            SymbolTable.root.put(actorItem);
+        } catch (ItemAlreadyExistsException e) {
+            System.out.println("Line:" + actorDeclaration.getLine() + ":Redefinition of actor " + actorDeclaration.getName().getName());
+        }
+
         return;
     }
 
     @Override
     public void visit(HandlerDeclaration handlerDeclaration) {
-        System.out.println(handlerDeclaration.toString());
+        SymbolTable.push(new SymbolTable(SymbolTable.top, handlerDeclaration.getName().getName()));
 
         Identifier name = handlerDeclaration.getName();
         if(name != null) {
@@ -117,16 +132,36 @@ public class NameAnalyser implements Visitor {
             }
         }
 
+        SymbolTableHandlerItem handlerItem = new SymbolTableHandlerItem(handlerDeclaration);
+        handlerItem.setHandlerSymbolTable(SymbolTable.top);
+        SymbolTable.pop();
+
+        try {
+            SymbolTable.top.put(handlerItem);
+        } catch (ItemAlreadyExistsException e) {
+            System.out.println("Line:" + handlerDeclaration.getLine() + ":Redefinition of msghandler " + handlerDeclaration.getName().getName());
+        }
+
         return;
     }
 
     @Override
     public void visit(VarDeclaration varDeclaration) {
-        System.out.println(varDeclaration.toString());
+        if (varDeclaration.isArrayDeclaration()) {
+            if (((ArrayType) varDeclaration.getType()).getSize() < 1) {
+                System.out.println("Line:" + varDeclaration.getLine() + ":Array size must be positive " + varDeclaration.getIdentifier().getName());
+            }
+        }
 
         Identifier id = varDeclaration.getIdentifier();
         if(id != null) {
             id.accept(this);
+        }
+
+        try {
+            SymbolTable.top.put(new SymbolTableActorVariableItem(varDeclaration));
+        } catch (ItemAlreadyExistsException e) {
+            System.out.println("Line:" + varDeclaration.getLine() + ":Redefinition of variable " + varDeclaration.getIdentifier().getName());
         }
 
         return;
@@ -134,7 +169,7 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(Main mainActors) {
-        System.out.println(mainActors.toString());
+        SymbolTable.push(new SymbolTable(SymbolTable.top, mainActors.toString()));
 
         ArrayList<ActorInstantiation> actors = mainActors.getMainActors();
         if(actors != null) {
@@ -143,12 +178,26 @@ public class NameAnalyser implements Visitor {
             }
         }
 
+        SymbolTableMainItem mainItem = new SymbolTableMainItem(mainActors);
+        mainItem.setMainSymbolTable(SymbolTable.top);
+        SymbolTable.pop();
+
+        try {
+            SymbolTable.root.put(mainItem);
+        } catch (ItemAlreadyExistsException e) {
+        }
+
         return;
     }
 
     @Override
     public void visit(ActorInstantiation actorInstantiation) {
-        System.out.println(actorInstantiation.toString());
+
+        try {
+            SymbolTable.top.put(new SymbolTableActorVariableItem(actorInstantiation));
+        } catch (ItemAlreadyExistsException e) {
+            System.out.println("Line:" + actorInstantiation.getLine() + ":Redefinition of variable " + actorInstantiation.getIdentifier().getName());
+        }
 
         Identifier id = actorInstantiation.getIdentifier();
         if(id != null) {
@@ -174,7 +223,6 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(UnaryExpression unaryExpression) {
-        System.out.println(unaryExpression.toString());
 
         Expression operand = unaryExpression.getOperand();
         if(operand != null) {
@@ -186,7 +234,6 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(BinaryExpression binaryExpression) {
-        System.out.println(binaryExpression.toString());
 
         Expression leftOperand = binaryExpression.getLeft();
         if(leftOperand != null) {
@@ -203,7 +250,6 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(ArrayCall arrayCall) {
-        System.out.println(arrayCall.toString());
 
         Expression arrayInstance = arrayCall.getArrayInstance();
         if(arrayInstance != null) {
@@ -220,7 +266,6 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(ActorVarAccess actorVarAccess) {
-        System.out.println(actorVarAccess.toString());
 
         Self self = actorVarAccess.getSelf();
         if(self != null) {
@@ -237,49 +282,42 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(Identifier identifier) {
-        System.out.println(identifier.toString());
 
         return;
     }
 
     @Override
     public void visit(Self self) {
-        System.out.println(self.toString());
 
         return;
     }
 
     @Override
     public void visit(Sender sender) {
-        System.out.println(sender.toString());
 
         return;
     }
 
     @Override
     public void visit(BooleanValue value) {
-        System.out.println(value.toString());
 
         return;
     }
 
     @Override
     public void visit(IntValue value) {
-        System.out.println(value.toString());
 
         return;
     }
 
     @Override
     public void visit(StringValue value) {
-        System.out.println(value.toString());
 
         return;
     }
 
     @Override
     public void visit(Block block) {
-        System.out.println(block.toString());
 
         ArrayList<Statement> stmts = block.getStatements();
         if(stmts != null) {
@@ -293,7 +331,6 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(Conditional conditional) {
-        System.out.println(conditional.toString());
 
         Expression expr = conditional.getExpression();
         if(expr != null) {
@@ -315,7 +352,6 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(For loop) {
-        System.out.println(loop.toString());
 
         Assign initialize = loop.getInitialize();
         if(initialize != null) {
@@ -343,21 +379,18 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(Break breakLoop) {
-        System.out.println(breakLoop.toString());
 
         return;
     }
 
     @Override
     public void visit(Continue continueLoop) {
-        System.out.println(continueLoop.toString());
 
         return;
     }
 
     @Override
     public void visit(MsgHandlerCall msgHandlerCall) {
-        System.out.println(msgHandlerCall.toString());
         Expression instance = msgHandlerCall.getInstance();
         if(instance != null) {
             instance.accept(this);
@@ -380,7 +413,6 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(Print print) {
-        System.out.println(print.toString());
 
         Expression arg = print.getArg();
         if(arg != null) {
@@ -392,7 +424,6 @@ public class NameAnalyser implements Visitor {
 
     @Override
     public void visit(Assign assign) {
-        System.out.println(assign.toString());
 
         Expression lValue = assign.getlValue();
         if(lValue != null){

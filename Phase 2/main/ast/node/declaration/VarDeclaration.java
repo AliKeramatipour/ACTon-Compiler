@@ -29,6 +29,10 @@ public class VarDeclaration extends Declaration {
         this.type = type;
     }
 
+    public boolean isArrayDeclaration() {
+        return this.type instanceof ArrayType;
+    }
+
     @Override
     public String toString() {
         return "VarDeclaration";
