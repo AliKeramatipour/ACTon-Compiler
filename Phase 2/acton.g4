@@ -1,21 +1,35 @@
 grammar acton;
 
-program
-    : (actorDeclaration)+ mainDeclaration
+program returns [Program p]
+    : {$p = new Program();}
+    (a = actorDeclaration { $p.addActor($a.actorDec); })+ m = mainDeclaration { $p.setMain(m.main); }
     ;
 
-actorDeclaration
-    :   ACTOR identifier (EXTENDS identifier)? LPAREN INTVAL RPAREN
+actorDeclaration returns [ActorDeclaration actorDec]
+:
+	ACTOR name = identifier {$actorDec = new ActorDeclaration($name.identifier); }
+    (EXTENDS parent = identifier { $actorDec.setParent($parent.identifier); })?
+    LPAREN INTVAL { $actorDec.setQueueSize($INTVAL.int); } RPAREN
         LBRACE
 
         (KNOWNACTORS
         LBRACE
-            (identifier identifier SEMICOLON)*
+	    (
+            actorType = identifier actorName = identifier SEMICOLON
+            {
+                $actorDec.addKnownActor(
+                    new VarDeclaration(
+                        new Identifier($actorName.text),
+                        new ActorType($actorType.text)
+                    )
+                );
+            }
+        )*
         RBRACE)
 
         (ACTORVARS
         LBRACE
-            varDeclarations
+            varDeclarations { $actorDec.setActorVars($varDeclarations.varDecs); }
         RBRACE)
 
         (initHandlerDeclaration)?
@@ -24,7 +38,7 @@ actorDeclaration
         RBRACE
     ;
 
-mainDeclaration
+mainDeclaration returns [Main main]
     :   MAIN
     	LBRACE
         actorInstantiation*
@@ -38,10 +52,17 @@ actorInstantiation
     ;
 
 initHandlerDeclaration
-    :	MSGHANDLER INITIAL LPAREN argDeclarations RPAREN
+	returns[InitHandlerDeclaration initHandlerDec]
+    :
+	    MSGHANDLER INITIAL
+        { $initHandlerDec = new InitHandlerDeclaration($INITIAL.text); }
+        LPAREN
+            argDeclarations
+            { $initHandlerDec.setArgs($argDeclarations.args); }
+        RPAREN
      	LBRACE
-     	varDeclarations
-     	(statement)*
+        varDeclarations { $initHandlerDec.setLocalVars($varDeclarations.varDecs); }
+        (statement { $initHandlerDec.addStatement($statement.stmt); })*
      	RBRACE
     ;
 
@@ -54,21 +75,30 @@ msgHandlerDeclaration
     ;
 
 argDeclarations
-    :	varDeclaration(COMMA varDeclaration)* |
+	returns [ArrayList<VarDeclaration> args]
+    :
+        { $args = new ArrayList<>(); }
+        varDeclaration { $args.add($varDeclaration.varDec); }
+        (COMMA varDeclaration { $args.add($varDeclaration.varDec); })* |
     ;
 
-varDeclarations
-    :	(varDeclaration SEMICOLON)*
+varDeclarations returns[ArrayList<VarDeclaration> varDecs]
+    :
+	{ $varDecs = new ArrayList<>(); }
+    (varDeclaration SEMICOLON { $varDecs.add($varDeclaration.varDec); } )*
     ;
 
-varDeclaration
-    :	INT identifier
-    |   STRING identifier
-    |   BOOLEAN identifier
-    |   INT identifier LBRACKET INTVAL RBRACKET
+varDeclaration returns[VarDeclaration varDec] locals [Type t, Identifier id]
+:
+	(INT identifier { $t = new IntType(); $id = $identifier.identifier }
+    | STRING identifier { $t = new StringType(); $id = $identifier.identifier }
+    | BOOLEAN identifier { $t = new BooleanType(); $id = $identifier.identifier }
+    | INT identifier LBRACKET INTVAL RBRACKET { $t = new ArrayType(); $t.setSize($INTVAL.int); $id = $identifier.identifier })
+    {$varDec = new VarDeclaration($id, $t);}
     ;
 
 statement
+	returns[Statement stmt]
     :	blockStmt
     | 	printStmt
     |  	assignStmt
@@ -185,8 +215,8 @@ expressionList
     :	(expression(COMMA expression)* | )
     ;
 
-identifier
-    :   IDENTIFIER
+identifier returns [Identifier identifier]
+    : IDENTIFIER {$identifier = new Identifier($IDENTIFIER.text); }
     ;
 
 value
