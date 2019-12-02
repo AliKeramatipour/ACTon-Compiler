@@ -33,8 +33,6 @@ public class ASTPrinter implements Visitor {
         if(main != null) {
             main.accept(this);
         }
-
-        return;
     }
 
     @Override
@@ -76,8 +74,6 @@ public class ASTPrinter implements Visitor {
                 msgHandlerDec.accept(this);
             }
         }
-
-        return;
     }
 
     @Override
@@ -109,8 +105,6 @@ public class ASTPrinter implements Visitor {
                 stmt.accept(this);
             }
         }
-
-        return;
     }
 
     @Override
@@ -121,8 +115,6 @@ public class ASTPrinter implements Visitor {
         if(id != null) {
             id.accept(this);
         }
-
-        return;
     }
 
     @Override
@@ -135,8 +127,6 @@ public class ASTPrinter implements Visitor {
                 actor.accept(this);
             }
         }
-
-        return;
     }
 
     @Override
@@ -161,8 +151,6 @@ public class ASTPrinter implements Visitor {
                 arg.accept(this);
             }
         }
-
-        return;
     }
 
     @Override
@@ -173,8 +161,6 @@ public class ASTPrinter implements Visitor {
         if(operand != null) {
             operand.accept(this);
         }
-
-        return;
     }
 
     @Override
@@ -190,8 +176,6 @@ public class ASTPrinter implements Visitor {
         if(rightOperand != null) {
             rightOperand.accept(this);
         }
-
-        return;
     }
 
     @Override
@@ -207,8 +191,6 @@ public class ASTPrinter implements Visitor {
         if(index != null) {
             index.accept(this);
         }
-
-        return;
     }
 
     @Override
@@ -224,50 +206,36 @@ public class ASTPrinter implements Visitor {
         if(varName != null) {
             varName.accept(this);
         }
-
-        return;
     }
 
     @Override
     public void visit(Identifier identifier) {
         System.out.println(identifier.toString());
-
-        return;
     }
 
     @Override
     public void visit(Self self) {
         System.out.println(self.toString());
-
-        return;
     }
 
     @Override
     public void visit(Sender sender) {
         System.out.println(sender.toString());
-
-        return;
     }
 
     @Override
     public void visit(BooleanValue value) {
         System.out.println(value.toString());
-
-        return;
     }
 
     @Override
     public void visit(IntValue value) {
         System.out.println(value.toString());
-
-        return;
     }
 
     @Override
     public void visit(StringValue value) {
         System.out.println(value.toString());
-
-        return;
     }
 
     @Override
@@ -280,8 +248,6 @@ public class ASTPrinter implements Visitor {
                 stmt.accept(this);
             }
         }
-
-        return;
     }
 
     @Override
@@ -302,8 +268,6 @@ public class ASTPrinter implements Visitor {
         if(elseBody != null) {
             elseBody.accept(this);
         }
-
-        return;
     }
 
     @Override
@@ -330,22 +294,16 @@ public class ASTPrinter implements Visitor {
             body.accept(this);
         }
 
-
-        return;
     }
 
     @Override
     public void visit(Break breakLoop) {
         System.out.println(breakLoop.toString());
-
-        return;
     }
 
     @Override
     public void visit(Continue continueLoop) {
         System.out.println(continueLoop.toString());
-
-        return;
     }
 
     @Override
@@ -367,8 +325,6 @@ public class ASTPrinter implements Visitor {
                 arg.accept(this);
             }
         }
-
-        return;
     }
 
     @Override
@@ -379,8 +335,6 @@ public class ASTPrinter implements Visitor {
         if(arg != null) {
             arg.accept(this);
         }
-
-        return;
     }
 
     @Override
@@ -396,7 +350,5 @@ public class ASTPrinter implements Visitor {
         if(rValue != null){
             rValue.accept(this);
         }
-
-        return;
     }
 }

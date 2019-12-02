@@ -25,6 +25,12 @@ public class SymbolTable {
 		top = stack.pop();
 	}
 
+	public static void unVisitAll() {
+		for(SymbolTableItem item: root.getSymbolTableItems().values()) {
+			item.unVisit();
+		}
+	}
+
 	// End of static members region
 
 	SymbolTable pre;
