@@ -1,7 +1,6 @@
 package main.ast.node.declaration;
 
 import main.ast.type.Type;
-import main.ast.type.arrayType.ArrayType;
 import main.visitor.Visitor;
 import main.ast.node.expression.Identifier;
 
@@ -28,10 +27,6 @@ public class VarDeclaration extends Declaration {
 
     public void setType(Type type) {
         this.type = type;
-    }
-
-    public boolean isArrayDeclaration() {
-        return this.type instanceof ArrayType;
     }
 
     @Override

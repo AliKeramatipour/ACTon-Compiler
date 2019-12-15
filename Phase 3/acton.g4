@@ -1,388 +1,254 @@
 grammar acton;
 
 @header{
-    package main.parsers;
-    import main.*;
     import main.ast.node.*;
     import main.ast.node.declaration.*;
     import main.ast.node.declaration.handler.*;
+    import main.ast.node.statement.*;
     import main.ast.node.expression.*;
     import main.ast.node.expression.operators.*;
     import main.ast.node.expression.values.*;
-    import main.ast.node.statement.*;
-    import main.ast.type.*;
-    import main.ast.type.actorType.*;
-    import main.ast.type.arrayType.*;
     import main.ast.type.primitiveType.*;
-    import java.util.ArrayList;
+    import main.ast.type.arrayType.*;
+    import main.ast.type.actorType.*;
+    import main.ast.type.*;
 }
 
 program returns [Program p]
-    : { $p = new Program(); }
-    (actorDeclaration { $p.addActor($actorDeclaration.actorDec); })+
-    mainDeclaration { $p.setMain($mainDeclaration.main); }
+    :   {$p = new Program();}
+        (actordec = actorDeclaration {$p.addActor($actordec.actordec);})+
+        programMain = mainDeclaration {$p.setMain($programMain.main);}
     ;
 
-actorDeclaration
-	returns[ActorDeclaration actorDec]
-	locals[VarDeclaration varDec]
-:
-	ACTOR name = identifier {$actorDec = new ActorDeclaration($name.id); $actorDec.setLine($ACTOR.getLine()); }
-    (EXTENDS parent = identifier { $actorDec.setParentName($parent.id); })?
-    LPAREN INTVAL { $actorDec.setQueueSize($INTVAL.int); } RPAREN
+actorDeclaration returns [ActorDeclaration actordec]
+    :   a = ACTOR name = identifier {$actordec = new ActorDeclaration($name.id); $actordec.setLine($a.getLine());}
+        (EXTENDS pname = identifier {$actordec.setParentName($pname.id);})?
+        LPAREN queue = INTVAL RPAREN {$actordec.setQueueSize($queue.int);}
+
         LBRACE
 
         (KNOWNACTORS
         LBRACE
-	    (
-            actorType = identifier actorName = identifier SEMICOLON
-            {
-                $varDec = new VarDeclaration(
-                    new Identifier($actorName.text),
-                    new ActorType($actorType.id)
-                );
-		        $varDec.setLine($actorType.id.getLine());
-                $actorDec.addKnownActor($varDec);
-            }
-        )*
+            (actor = identifier name = identifier SEMICOLON
+            {$actordec.addKnownActor(new VarDeclaration($name.id, new ActorType($actor.id)));})*
         RBRACE)
 
         (ACTORVARS
         LBRACE
-            varDeclarations { $actorDec.setActorVars($varDeclarations.varDecs); }
+            vardecs = varDeclarations {$actordec.setActorVars($vardecs.vardecs);}
         RBRACE)
 
-        (initHandlerDeclaration { $actorDec.setInitHandler($initHandlerDeclaration.handlerDec); } )?
-        (msgHandlerDeclaration { $actorDec.addMsgHandler($msgHandlerDeclaration.handlerDec); })*
+        (inithandler = initHandlerDeclaration {$actordec.setInitHandler($inithandler.inithandler);})?
+        (msghandler = msgHandlerDeclaration {$actordec.addMsgHandler($msghandler.msghandler);})*
 
         RBRACE
     ;
 
 mainDeclaration returns [Main main]
-    :   { $main = new Main(); }
-        MAIN { $main.setLine($MAIN.getLine()); }
-    	LBRACE
+    :   {$main = new Main();} m = MAIN {$main.setLine($m.getLine());} LBRACE
         (
-            actorInstantiation
-            { $main.addActorInstantiation($actorInstantiation.actorInstance); }
+        actorInst = actorInstantiation
+        {$main.addActorInstantiation($actorInst.actorInst);}
         )*
-    	RBRACE
+        RBRACE
     ;
 
-actorInstantiation
-	returns [ActorInstantiation actorInstance]
-    :	actorType = identifier actorName = identifier
-        {
-            $actorInstance = new ActorInstantiation(
-                new ActorType($actorType.id),
-                $actorName.id
-            );
-	        $actorInstance.setLine($actorType.id.getLine());
-        }
-     	LPAREN
-        (
-	        identifier { $actorInstance.addKnownActor($identifier.id); }
-            (COMMA identifier { $actorInstance.addKnownActor($identifier.id); })*
-            |
+actorInstantiation returns [ActorInstantiation actorInst]
+    :
+     actor = identifier name = identifier {$actorInst = new ActorInstantiation(new ActorType($actor.id), $name.id); $actorInst.setLine($actor.id.getLine());}
+     LPAREN (id = identifier {$actorInst.addKnownActor($id.id);} (COMMA id = identifier {$actorInst.addKnownActor($id.id);})* | ) RPAREN
+     COLON LPAREN el = expressionList RPAREN SEMICOLON { $actorInst.setInitArgs($el.expressions);}
+     ;
+
+initHandlerDeclaration returns [InitHandlerDeclaration inithandler]
+    :   msg = MSGHANDLER INITIAL {$inithandler = new InitHandlerDeclaration(new Identifier("initial")); $inithandler.setLine($msg.getLine());}
+        LPAREN argdecs = argDeclarations RPAREN {$inithandler.setArgs($argdecs.argdecs);}
+        LBRACE
+        vardecs = varDeclarations {$inithandler.setLocalVars($vardecs.vardecs);}
+        (s = statement {$inithandler.addStatement($s.s);})*
+        RBRACE
+    ;
+
+msgHandlerDeclaration returns [MsgHandlerDeclaration msghandler]
+    :   msg = MSGHANDLER id = identifier {$msghandler = new MsgHandlerDeclaration($id.id); $msghandler.setLine($msg.getLine());}
+        LPAREN argdecs = argDeclarations RPAREN {$msghandler.setArgs($argdecs.argdecs);}
+        LBRACE
+        vardecs = varDeclarations {$msghandler.setLocalVars($vardecs.vardecs);}
+        (s = statement {$msghandler.addStatement($s.s);})*
+        RBRACE
+    ;
+
+argDeclarations returns [ArrayList<VarDeclaration> argdecs]
+    :   {$argdecs = new ArrayList<>();}
+        (vardec = varDeclaration {$argdecs.add($vardec.vardec);}
+        (COMMA vardec = varDeclaration {$argdecs.add($vardec.vardec);})* | )
+    ;
+
+varDeclarations returns [ArrayList<VarDeclaration> vardecs]
+    :   {$vardecs = new ArrayList<>();}
+        (vardec = varDeclaration SEMICOLON {$vardecs.add($vardec.vardec);})*
+    ;
+
+varDeclaration returns [VarDeclaration vardec]
+    :	{Type t = null;}
+    (   intType = INT id = identifier {t = new IntType(); t.setLine($intType.getLine());}
+    |   stringType = STRING id = identifier {t = new StringType(); t.setLine($stringType.getLine());}
+    |   booleanType = BOOLEAN id = identifier {t = new BooleanType(); t.setLine($booleanType.getLine());}
+    |   arrayType = INT id = identifier LBRACKET size = INTVAL RBRACKET {t = new ArrayType($size.int); t.setLine($arrayType.getLine());}
+    )   {$vardec = new VarDeclaration($id.id, t); $vardec.setLine(t.getLine());}
+    ;
+
+statement returns [Statement s]
+    :   block = blockStmt {$s = $block.block;}
+    |   print = printStmt {$s = $print.print;}
+    |   assignstmt = assignStmt {$s = $assignstmt.assign;}
+    |   forstmt = forStmt {$s = $forstmt.forstmt;}
+    |   ifstmt = ifStmt {$s = $ifstmt.ifstmt;}
+    |   c = continueStmt {$s = $c.c;}
+    |   b = breakStmt {$s = $b.b;}
+    |   handlerCall = msgHandlerCall {$s = $handlerCall.handlerCall;}
+    ;
+
+blockStmt returns [Block block]
+    :   {$block = new Block();} lbrace = LBRACE {$block.setLine($lbrace.getLine());} (s = statement {$block.addStatement($s.s);})* RBRACE
+    ;
+
+printStmt returns [Print print]
+    :   p = PRINT LPAREN e = expression RPAREN SEMICOLON {$print = new Print($e.e); $print.setLine($p.getLine());}
+    ;
+
+assignStmt returns [Assign assign]
+    :    asgn = assignment SEMICOLON {$assign = $asgn.assign;}
+    ;
+
+assignment returns [Assign assign]
+    :   lv = orExpression a = ASSIGN rv = expression {$assign = new Assign($lv.oe, $rv.e); $assign.setLine($a.getLine());}
+    ;
+
+forStmt returns [For forstmt]
+    :   f = FOR LPAREN {$forstmt = new For(); $forstmt.setLine($f.getLine());}
+        (init = assignStmt {$forstmt.setInitialize($init.assign);})? SEMICOLON
+        (cond = expression {$forstmt.setCondition($cond.e);})? SEMICOLON
+        (update = assignStmt {$forstmt.setUpdate($update.assign);})? RPAREN s = statement {$forstmt.setBody($s.s);}
+    ;
+
+ifStmt returns [Conditional ifstmt]
+    :   i = IF LPAREN e = expression RPAREN s = statement {$ifstmt = new Conditional($e.e, $s.s); $ifstmt.setLine($i.getLine());}
+        (ELSE s = statement {$ifstmt.setElseBody($s.s);})?
+    ;
+
+continueStmt returns [Continue c]
+    :   con = CONTINUE SEMICOLON {$c = new Continue(); $c.setLine($con.getLine());}
+    ;
+
+breakStmt returns [Break b]
+    :   br = BREAK SEMICOLON {$b = new Break(); $b.setLine($br.getLine());}
+    ;
+
+msgHandlerCall returns [MsgHandlerCall handlerCall]
+    :   {Expression instance;}
+        (id = identifier {instance = $id.id;} |
+        SELF {instance = new Self();} |
+        SENDER {instance = new Sender();}) dot = DOT
+        name = identifier {$handlerCall = new MsgHandlerCall(instance, $name.id); $handlerCall.setLine($dot.getLine());}
+        LPAREN el = expressionList RPAREN {$handlerCall.setArgs($el.expressions);} SEMICOLON
+    ;
+
+expression returns [Expression e]
+    :   oe = orExpression {$e = $oe.oe;}
+        (assign = ASSIGN exp = expression {$e = new BinaryExpression($oe.oe, $exp.e, BinaryOperator.assign); $e.setLine($assign.getLine());})?
+    ;
+
+orExpression returns [Expression oe]
+    :   ae = andExpression {$oe = $ae.ae;}
+        (or = OR ae = andExpression {$oe = new BinaryExpression($oe, $ae.ae, BinaryOperator.or); $oe.setLine($or.getLine());})*
+    ;
+
+andExpression returns [Expression ae]
+    :   ee = equalityExpression {$ae = $ee.ee;}
+        (and = AND e2 = equalityExpression {$ae = new BinaryExpression($ae, $ee.ee, BinaryOperator.and); $ae.setLine($and.getLine());})*
+    ;
+
+equalityExpression returns [Expression ee]
+    :   re = relationalExpression {$ee = $re.re;}
+        ({BinaryOperator op; int lineNum;} (eq = EQ {op = BinaryOperator.eq; lineNum = $eq.getLine();} |
+                               neq = NEQ {op = BinaryOperator.neq; lineNum = $neq.getLine();})
+        re = relationalExpression {$ee = new BinaryExpression($ee, $re.re, op); $ee.setLine(lineNum);})*
+    ;
+
+relationalExpression returns [Expression re]
+    :   ae = additiveExpression {$re = $ae.ae;}
+        ({BinaryOperator op; int lineNum;} (lt = LT {op = BinaryOperator.lt; lineNum = $lt.getLine();} |
+                                            gt = GT {op = BinaryOperator.gt; lineNum = $gt.getLine();})
+        ae = additiveExpression {$re = new BinaryExpression($re, $ae.ae, op); $re.setLine(lineNum);})*
+    ;
+
+additiveExpression returns [Expression ae]
+    :   me = multiplicativeExpression {$ae = $me.me;}
+        ({BinaryOperator op; int lineNum;} (plus = PLUS {op = BinaryOperator.add; lineNum = $plus.getLine();} |
+                                            minus = MINUS {op = BinaryOperator.sub; lineNum = $minus.getLine();})
+        me = multiplicativeExpression {$ae = new BinaryExpression($ae, $me.me, op); $ae.setLine(lineNum);})*
+    ;
+
+multiplicativeExpression returns [Expression me]
+    :   pre = preUnaryExpression {$me = $pre.pue;}
+        ({BinaryOperator op; int lineNum;} ( mult = MULT {op = BinaryOperator.mult; lineNum = $mult.getLine();} |
+                                div = DIV {op = BinaryOperator.div; lineNum = $div.getLine();} |
+                                percent = PERCENT {op = BinaryOperator.mod; lineNum = $percent.getLine();})
+        pre = preUnaryExpression {$me = new BinaryExpression($me, $pre.pue, op); $me.setLine(lineNum);})*
+    ;
+
+preUnaryExpression returns [Expression pue]
+    :   not = NOT pe = preUnaryExpression {$pue = new UnaryExpression(UnaryOperator.not, $pe.pue); $pue.setLine($not.getLine());}
+    |   minus = MINUS pe = preUnaryExpression {$pue = new UnaryExpression(UnaryOperator.minus, $pe.pue); $pue.setLine($minus.getLine());}
+    |   plusplus = PLUSPLUS pe = preUnaryExpression {$pue = new UnaryExpression(UnaryOperator.preinc, $pe.pue); $pue.setLine($plusplus.getLine());}
+    |   minusminus = MINUSMINUS pe = preUnaryExpression {$pue = new UnaryExpression(UnaryOperator.predec, $pe.pue); $pue.setLine($minusminus.getLine());}
+    |   post = postUnaryExpression {$pue = $post.pue;}
+    ;
+
+postUnaryExpression returns [Expression pue]
+    :   oe = otherExpression {$pue = $oe.oe;} (op = postUnaryOp {$pue = new UnaryExpression($op.op, $pue); $pue.setLine($op.lineNum);} )?
+    ;
+
+postUnaryOp returns [UnaryOperator op, int lineNum]
+    :   plusplus = PLUSPLUS {$op = UnaryOperator.postinc; $lineNum = $plusplus.getLine();} |
+        minusminus = MINUSMINUS {$op = UnaryOperator.postdec; $lineNum = $minusminus.getLine();}
+    ;
+
+otherExpression returns [Expression oe]
+    :   LPAREN e = expression {$oe = $e.e;} RPAREN
+    |   id = identifier {$oe = $id.id;}
+    |   arrCall = arrayCall {$oe = $arrCall.arrCall;}
+    |   av = actorVarAccess {$oe = $av.av;}
+    |   v = value {$oe = $v.v;}
+    |   sender = SENDER {$oe = new Sender(); $oe.setLine($sender.getLine());}
+    ;
+
+arrayCall returns [ArrayCall arrCall]
+    :   {Expression instance;}
+        (id = identifier {instance = $id.id;} | av = actorVarAccess {instance = $av.av;})
+        lbracket = LBRACKET e = expression RBRACKET {$arrCall = new ArrayCall(instance, $e.e); $arrCall.setLine($lbracket.getLine());}
+    ;
+
+actorVarAccess returns [ActorVarAccess av]
+    :   self = SELF DOT id = identifier {$av = new ActorVarAccess($id.id); $av.setLine($self.getLine());}
+    ;
+
+expressionList returns [ArrayList <Expression> expressions]
+    :   {$expressions = new ArrayList<>();}
+        ( e = expression {$expressions.add($e.e);} (COMMA e = expression {$expressions.add($e.e);})* |
         )
-        RPAREN
-     	COLON
-        LPAREN
-            expressionList { $actorInstance.setInitArgs($expressionList.exps); }
-        RPAREN SEMICOLON
-    ;
-
-initHandlerDeclaration
-	returns [InitHandlerDeclaration handlerDec]
-    :
-	    MSGHANDLER INITIAL
-        {
-            $handlerDec = new InitHandlerDeclaration(new Identifier($INITIAL.text));
-		    $handlerDec.setLine($MSGHANDLER.getLine());
-        }
-        LPAREN
-            argDeclarations
-            { $handlerDec.setArgs($argDeclarations.args); }
-        RPAREN
-     	LBRACE
-            varDeclarations { $handlerDec.setLocalVars($varDeclarations.varDecs); }
-            (statement { $handlerDec.addStatement($statement.stmt); })*
-     	RBRACE
-    ;
-
-msgHandlerDeclaration
-	returns [MsgHandlerDeclaration handlerDec]
-    :
-        MSGHANDLER identifier
-            {
-                $handlerDec = new MsgHandlerDeclaration($identifier.id);
-	            $handlerDec.setLine($MSGHANDLER.getLine());
-            }
-        LPAREN
-            argDeclarations
-            {
-                $handlerDec.setArgs($argDeclarations.args);
-            }
-        RPAREN
-       	LBRACE
-            varDeclarations { $handlerDec.setLocalVars($varDeclarations.varDecs); }
-            (statement { $handlerDec.addStatement($statement.stmt); })*
-       	RBRACE
-    ;
-
-argDeclarations
-	returns [ArrayList<VarDeclaration> args]
-    :
-        { $args = new ArrayList<VarDeclaration>(); }
-        (varDeclaration { $args.add($varDeclaration.varDec); }
-        (COMMA varDeclaration { $args.add($varDeclaration.varDec); })* |)
-    ;
-
-varDeclarations returns [ArrayList<VarDeclaration> varDecs]
-    :
-	{ $varDecs = new ArrayList<VarDeclaration>(); }
-    (varDeclaration SEMICOLON { $varDecs.add($varDeclaration.varDec); } )*
-    ;
-
-varDeclaration returns [VarDeclaration varDec] locals [Type t, Identifier id]
-:
-	(INT identifier { $t = new IntType(); $t.setLine($INT.getLine()); $id = $identifier.id; }
-    | STRING identifier { $t = new StringType(); $t.setLine($STRING.getLine()); $id = $identifier.id; }
-    | BOOLEAN identifier { $t = new BooleanType(); $t.setLine($BOOLEAN.getLine()); $id = $identifier.id; }
-    | INT identifier LBRACKET INTVAL RBRACKET { $t = new ArrayType($INTVAL.int); $t.setLine($INT.getLine()); $id = $identifier.id; })
-    { $varDec = new VarDeclaration($id, $t); $varDec.setLine($t.getLine()); }
-    ;
-
-statement
-	returns [Statement stmt]
-    :	blockStmt       { $stmt = $blockStmt.stmt; }
-    | 	printStmt       { $stmt = $printStmt.stmt; }
-    |  	assignStmt      { $stmt = $assignStmt.stmt; }
-    |  	forStmt         { $stmt = $forStmt.stmt; }
-    |  	ifStmt          { $stmt = $ifStmt.stmt; }
-    |  	continueStmt    { $stmt = $continueStmt.stmt; }
-    |  	breakStmt       { $stmt = $breakStmt.stmt; }
-    |  	msgHandlerCall  { $stmt = $msgHandlerCall.stmt; }
-    ;
-
-blockStmt returns [Block stmt]
-    : { $stmt = new Block(); }
-    LBRACE { $stmt.setLine($LBRACE.getLine()); }
-        (statement { $stmt.addStatement($statement.stmt); })*
-    RBRACE
-    ;
-
-//CHECK THIS PART
-printStmt returns [Print stmt]
-    :
-	PRINT LPAREN expression RPAREN SEMICOLON { $stmt = new Print($expression.exp); $stmt.setLine($PRINT.getLine()); }
-    ;
-
-assignStmt returns [Assign stmt]
-    : assignment SEMICOLON { $stmt = $assignment.stmt; }
-    ;
-
-assignment returns [Assign stmt]
-    :
-	orExpression ASSIGN expression { $stmt = new Assign($orExpression.exp, $expression.exp); $stmt.setLine($ASSIGN.getLine()); }
-    ;
-
-forStmt returns [For stmt]
-    :
-        FOR { $stmt = new For(); $stmt.setLine($FOR.getLine()); }
-        LPAREN
-            (assignment { $stmt.setInitialize($assignment.stmt); })?
-        SEMICOLON
-            (expression { $stmt.setCondition($expression.exp); })?
-        SEMICOLON
-            (assignment { $stmt.setUpdate($assignment.stmt); })?
-        RPAREN
-            statement   { $stmt.setBody($statement.stmt); }
-    ;
-
-ifStmt
-	returns [Conditional stmt]
-    :   IF LPAREN expression RPAREN statement elseStmt
-        {
-            $stmt = new Conditional($expression.exp, $statement.stmt);
-	        $stmt.setLine($IF.getLine());
-		    if ($elseStmt.stmt != null)
-		        $stmt.setElseBody($elseStmt.stmt);
-        }
-    ;
-
-elseStmt
-	returns [Statement stmt]
-    : ELSE statement {
-        $stmt = $statement.stmt;
-        $stmt.setLine($ELSE.getLine());
-    } |
-    ;
-
-continueStmt
-	returns [Continue stmt]
-    : 	CONTINUE SEMICOLON
-    {
-        $stmt = new Continue();
-	    $stmt.setLine($CONTINUE.getLine());
-    }
-    ;
-
-breakStmt
-	returns [Break stmt]
-    : 	BREAK SEMICOLON
-    {
-        $stmt = new Break();
-	    $stmt.setLine($BREAK.getLine());
-    }
-    ;
-
-msgHandlerCall
-	returns [MsgHandlerCall stmt]
-	locals[Expression instance]
-    :
-    (
-        identifier { $instance = $identifier.id; }
-        | SELF { $instance = new Self(); $instance.setLine($SELF.getLine()); }
-        | SENDER { $instance = new Sender(); $instance.setLine($SENDER.getLine()); }
-    ) DOT
-        // TODO: check set line
-        identifier { $stmt = new MsgHandlerCall($instance, $identifier.id); $stmt.setLine($instance.getLine()); }
-        LPAREN
-            expressionList { $stmt.setArgs($expressionList.exps); }
-        RPAREN
-    SEMICOLON
-    ;
-
-expression
-    returns [Expression exp]
-    :	orExpression { $exp = $orExpression.exp; }
-        (ASSIGN expression { $exp = new BinaryExpression($exp, $expression.exp, BinaryOperator.assign); $exp.setLine($ASSIGN.getLine()); } )?
-    ;
-
-orExpression
-	returns [Expression exp]
-    :	andExpression { $exp = $andExpression.exp; }
-        (OR andExpression { $exp = new BinaryExpression($exp, $andExpression.exp, BinaryOperator.or); $exp.setLine($OR.getLine()); } )*
-    ;
-
-andExpression
-	returns [Expression exp]
-    :	equalityExpression { $exp = $equalityExpression.exp; }
-        (AND equalityExpression { $exp = new BinaryExpression($exp, $equalityExpression.exp, BinaryOperator.and); $exp.setLine($AND.getLine()); } )*
-    ;
-
-equalityExpression
-	returns [Expression exp]
-    locals [BinaryOperator op, int line]
-    : relationalExpression { $exp = $relationalExpression.exp; }
-        ( (EQ { $op = BinaryOperator.eq; $line = $EQ.getLine(); } | NEQ { $op = BinaryOperator.neq; $line = $NEQ.getLine(); })
-        relationalExpression { $exp = new BinaryExpression($exp, $relationalExpression.exp, $op); $exp.setLine($line); })*
-    ;
-
-relationalExpression
-	returns [Expression exp]
-	locals[BinaryOperator op, int line]
-    : additiveExpression { $exp = $additiveExpression.exp; }
-(
-	( LT { $op = BinaryOperator.lt; $line = $LT.getLine(); } | GT { $op = BinaryOperator.gt; $line = $GT.getLine(); })
-        additiveExpression { $exp = new BinaryExpression($exp, $additiveExpression.exp, $op); $exp.setLine($line); })*
-    ;
-
-additiveExpression
-	returns [Expression exp]
-    locals [BinaryOperator op, int line]
-    : multiplicativeExpression { $exp = $multiplicativeExpression.exp; }
-(
-	( PLUS { $op = BinaryOperator.add; $line = $PLUS.getLine(); } | MINUS { $op = BinaryOperator.sub; $line = $MINUS.getLine(); })
-        multiplicativeExpression { $exp = new BinaryExpression($exp, $multiplicativeExpression.exp, $op); $exp.setLine($line); })*
-    ;
-
-multiplicativeExpression
-	returns [Expression exp]
-    locals [BinaryOperator op, int line]
-    : preUnaryExpression { $exp = $preUnaryExpression.exp; }
-    (
-        (
-            MULT { $op = BinaryOperator.mult; $line = $MULT.getLine(); }
-            | DIV { $op = BinaryOperator.div; $line = $DIV.getLine(); }
-            | PERCENT { $op = BinaryOperator.mod; $line = $line = $PERCENT.getLine(); }
-        )
-        preUnaryExpression { $exp = new BinaryExpression($exp, $preUnaryExpression.exp, $op); $exp.setLine($line); }
-    )*
-    ;
-
-preUnaryExpression
-	returns [Expression exp]
-    :   NOT preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.not, $preUnaryExpression.exp); $exp.setLine($NOT.getLine()); }
-    |   MINUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.minus, $preUnaryExpression.exp); $exp.setLine($MINUS.getLine()); }
-    |   PLUSPLUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.preinc, $preUnaryExpression.exp); $exp.setLine($PLUSPLUS.getLine()); }
-    |   MINUSMINUS preUnaryExpression { $exp = new UnaryExpression(UnaryOperator.predec, $preUnaryExpression.exp); $exp.setLine($MINUSMINUS.getLine()); }
-    |   postUnaryExpression { $exp = $postUnaryExpression.exp; }
-    ;
-
-postUnaryExpression
-	returns[Expression exp]
-	locals[UnaryOperator op, int line]
-    :
-	    otherExpression { $exp = $otherExpression.exp; }
-        (
-	        (
-		        PLUSPLUS { $op = UnaryOperator.postinc; $line = $PLUSPLUS.getLine(); }
-		        | MINUSMINUS { $op = UnaryOperator.preinc; $line = $MINUSMINUS.getLine(); }
-            )
-            { $exp = new UnaryExpression($op, $exp); $exp.setLine($line); }
-        )?
-    ;
-
-otherExpression
-	returns [Expression exp]
-    : LPAREN expression { $exp = $expression.exp; } RPAREN
-	| identifier { $exp = $identifier.id; }
-    | arrayCall { $exp = $arrayCall.exp; }
-    | actorVarAccess { $exp = $actorVarAccess.exp; }
-    | value { $exp = $value.val; }
-    | SENDER { $exp = new Sender(); $exp.setLine($SENDER.getLine()); }
-    ;
-
-arrayCall
-	returns [ArrayCall exp]
-    locals [Expression arrayInstance]
-    :
-	(
-		identifier { $arrayInstance = $identifier.id; }
-        | actorVarAccess { $arrayInstance = $actorVarAccess.exp; }
-    )
-    LBRACKET
-        expression { $exp = new ArrayCall($arrayInstance, $expression.exp); $exp.setLine($arrayInstance.getLine()); }
-    RBRACKET
-    ;
-
-actorVarAccess
-	returns [ActorVarAccess exp]
-    : SELF DOT identifier { $exp = new ActorVarAccess($identifier.id); $exp.setLine($SELF.getLine()); }
-    ;
-
-expressionList
-	returns [ArrayList<Expression> exps]
-    :
-        { $exps = new ArrayList<Expression>(); }
-        (expression { $exps.add($expression.exp); }
-        (COMMA expression { $exps.add($expression.exp); })* |)
-
     ;
 
 identifier returns [Identifier id]
-    :
-	IDENTIFIER {$id = new Identifier($IDENTIFIER.text); $id.setLine($IDENTIFIER.getLine()); }
+    :   iden = IDENTIFIER {$id = new Identifier($iden.text); $id.setLine($iden.getLine());}
     ;
 
-value returns [Value val]
-    :
-	INTVAL { $val = new IntValue($INTVAL.int, new IntType()); $val.setLine($INTVAL.getLine()); }
-    | STRINGVAL { $val = new StringValue($STRINGVAL.text, new StringType()); $val.setLine($STRINGVAL.getLine()); }
-    | TRUE { $val = new BooleanValue(true, new BooleanType()); $val.setLine($TRUE.getLine()); }
-    | FALSE { $val = new BooleanValue(false, new BooleanType()); $val.setLine($FALSE.getLine()); }
+value returns [Value v]
+    :   intVal = INTVAL {$v = new IntValue($intVal.int, new IntType()); $v.setLine($intVal.getLine());} |
+        strVal = STRINGVAL {$v = new StringValue($strVal.text, new StringType()); $v.setLine($strVal.getLine());} |
+        trueVal = TRUE {$v = new BooleanValue(true, new BooleanType()); $v.setLine($trueVal.getLine());} |
+        falseVal = FALSE {$v = new BooleanValue(false, new BooleanType()); $v.setLine($falseVal.getLine());}
     ;
 
 // values
