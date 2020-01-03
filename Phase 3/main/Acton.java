@@ -4,9 +4,11 @@ import main.ast.node.Program;
 import main.compileError.CompileErrorException;
 //import main.visitor.astPrinter.ASTPrinter;
 import main.visitor.nameAnalyser.NameAnalyser;
+import main.visitor.typeChecker.TypeChecker;
 import org.antlr.v4.runtime.*;
-import parsers.actonLexer;
-import parsers.actonParser;
+import main.parsers.actonLexer;
+import main.parsers.actonParser;
+
 
 import java.io.IOException;
 
@@ -17,14 +19,22 @@ public class Acton {
         actonLexer lexer = new actonLexer(reader);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         actonParser parser = new actonParser(tokens);
-        try{
+        try {
             Program program = parser.program().p; // program is starting production rule
             NameAnalyser nameAnalyser = new NameAnalyser();
             nameAnalyser.visit(program);
-            if( nameAnalyser.numOfErrors() > 0 )
+            if (nameAnalyser.numOfErrors() > 0) {
                 throw new CompileErrorException();
-        }
-        catch(CompileErrorException compileError){
+            }
+
+            TypeChecker typeChecker = new TypeChecker();
+            typeChecker.visit(program);
+            if (typeChecker.numOfErrors() > 0) {
+                throw new CompileErrorException();
+            }
+
+
+        } catch (CompileErrorException compileError) {
         }
     }
 }

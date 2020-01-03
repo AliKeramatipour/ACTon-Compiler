@@ -1,17 +1,18 @@
 grammar acton;
 
 @header{
-    import main.ast.node.*;
-    import main.ast.node.declaration.*;
-    import main.ast.node.declaration.handler.*;
-    import main.ast.node.statement.*;
-    import main.ast.node.expression.*;
-    import main.ast.node.expression.operators.*;
-    import main.ast.node.expression.values.*;
-    import main.ast.type.primitiveType.*;
-    import main.ast.type.arrayType.*;
-    import main.ast.type.actorType.*;
-    import main.ast.type.*;
+package main.parsers;
+import main.ast.node.*;
+import main.ast.node.declaration.*;
+import main.ast.node.declaration.handler.*;
+import main.ast.node.statement.*;
+import main.ast.node.expression.*;
+import main.ast.node.expression.operators.*;
+import main.ast.node.expression.values.*;
+import main.ast.type.primitiveType.*;
+import main.ast.type.arrayType.*;
+import main.ast.type.actorType.*;
+import main.ast.type.*;
 }
 
 program returns [Program p]
@@ -30,7 +31,12 @@ actorDeclaration returns [ActorDeclaration actordec]
         (KNOWNACTORS
         LBRACE
             (actor = identifier name = identifier SEMICOLON
-            {$actordec.addKnownActor(new VarDeclaration($name.id, new ActorType($actor.id)));})*
+            {
+                VarDeclaration knownActor = new VarDeclaration($name.id, new ActorType($actor.id));
+                knownActor.setLine($actor.id.getLine());
+                $actordec.addKnownActor(knownActor);
+            }
+            )*
         RBRACE)
 
         (ACTORVARS
@@ -127,9 +133,9 @@ assignment returns [Assign assign]
 
 forStmt returns [For forstmt]
     :   f = FOR LPAREN {$forstmt = new For(); $forstmt.setLine($f.getLine());}
-        (init = assignStmt {$forstmt.setInitialize($init.assign);})? SEMICOLON
+        (init = assignment {$forstmt.setInitialize($init.assign);})? SEMICOLON
         (cond = expression {$forstmt.setCondition($cond.e);})? SEMICOLON
-        (update = assignStmt {$forstmt.setUpdate($update.assign);})? RPAREN s = statement {$forstmt.setBody($s.s);}
+        (update = assignment {$forstmt.setUpdate($update.assign);})? RPAREN s = statement {$forstmt.setBody($s.s);}
     ;
 
 ifStmt returns [Conditional ifstmt]
@@ -150,6 +156,7 @@ msgHandlerCall returns [MsgHandlerCall handlerCall]
         (id = identifier {instance = $id.id;} |
         SELF {instance = new Self();} |
         SENDER {instance = new Sender();}) dot = DOT
+        {instance.setLine($dot.getLine());}
         name = identifier {$handlerCall = new MsgHandlerCall(instance, $name.id); $handlerCall.setLine($dot.getLine());}
         LPAREN el = expressionList RPAREN {$handlerCall.setArgs($el.expressions);} SEMICOLON
     ;
@@ -166,7 +173,7 @@ orExpression returns [Expression oe]
 
 andExpression returns [Expression ae]
     :   ee = equalityExpression {$ae = $ee.ee;}
-        (and = AND e2 = equalityExpression {$ae = new BinaryExpression($ae, $ee.ee, BinaryOperator.and); $ae.setLine($and.getLine());})*
+        (and = AND ee = equalityExpression {$ae = new BinaryExpression($ae, $ee.ee, BinaryOperator.and); $ae.setLine($and.getLine());})*
     ;
 
 equalityExpression returns [Expression ee]
@@ -231,7 +238,7 @@ arrayCall returns [ArrayCall arrCall]
     ;
 
 actorVarAccess returns [ActorVarAccess av]
-    :   self = SELF DOT id = identifier {$av = new ActorVarAccess($id.id); $av.setLine($self.getLine());}
+    :   SELF DOT id = identifier {$av = new ActorVarAccess($id.id); $av.setLine($SELF.getLine());}
     ;
 
 expressionList returns [ArrayList <Expression> expressions]

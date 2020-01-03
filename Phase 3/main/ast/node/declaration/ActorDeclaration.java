@@ -17,6 +17,7 @@ public class ActorDeclaration extends Declaration {
     private Identifier name;
     private Identifier parentName;
     private int queueSize;
+    public boolean hasParent;
 
     public ActorDeclaration(Identifier name){
         this.name = name;
@@ -68,6 +69,7 @@ public class ActorDeclaration extends Declaration {
 
     public void setParentName(Identifier name) {
         this.parentName = name;
+        hasParent = true ;
     }
 
     public int getQueueSize() {
